@@ -301,28 +301,22 @@
 
     return `
 <article class="ec">
-  <div class="ec__thumb" style="${thumbStyle}">
-    ${!ev.image ? `<div class="ec__date-badge"><span class="ec__date-month">${escapeHtml(monthAbbr)}</span><span class="ec__date-day">${dayNum}</span></div>` : ''}
-    <div class="ec__src-logo-wrap">
-      ${src.icon ? `<img class="ec__src-logo" src="${src.icon}" alt="${escapeHtml(src.shortLabel)} logo" loading="lazy"/>` : ''}
+  <div class="ec__top">
+    <div class="ec__date-col">
+      <span class="ec__date-month">${escapeHtml(monthAbbr)}</span>
+      <span class="ec__date-day">${dayNum}</span>
+    </div>
+    <div class="ec__thumb-mid" style="${thumbStyle}"></div>
+    <div class="ec__logo-col">
+      ${src.icon ? `<img class="ec__src-logo-lg" src="${src.icon}" alt="${escapeHtml(src.shortLabel)}" loading="lazy"/>` : `<span class="ec__src-pill-sm" style="background:${src.color};color:${src.textColor};">${escapeHtml(src.shortLabel)}</span>`}
     </div>
   </div>
   <div class="ec__body">
-    <div class="ec__src-pill" style="background:${src.color};color:${src.textColor};">${escapeHtml(src.shortLabel)}</div>
     <h4 class="ec__title">${escapeHtml(ev.title || 'Untitled event')}</h4>
     <p class="ec__when">${escapeHtml(dateStr)}${where ? ` · ${escapeHtml(where)}` : ''}</p>
     ${tagPills ? `<div class="ec__pills">${tagPills}</div>` : ''}
+    ${ev.url ? `<a class="ec__link-inline" href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">Event page ↗</a>` : ''}
   </div>
-  <details class="ec__details">
-    <summary class="ec__summary"><span>Details</span><span class="ec__chev" aria-hidden="true">▾</span></summary>
-    <div class="ec__expand">
-      ${ev.description ? `<p class="ec__desc">${escapeHtml(ev.description)}</p>` : ''}
-      <div class="ec__links">
-        ${ev.url ? `<a class="ec__link" href="${escapeHtml(ev.url)}" target="_blank" rel="noopener">Event page ↗</a>` : ''}
-        <a class="ec__link" href="calendar.html">Full calendar ↗</a>
-      </div>
-    </div>
-  </details>
 </article>`;
   }
   function render(){
