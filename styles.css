@@ -188,6 +188,10 @@ h3{font-size: 22px; margin:0 0 10px 0;}
   gap: var(--space-4);
   align-items:start;
 }
+.hero-right{
+  position: sticky;
+  top: 80px;
+}
 .feature-head{
   font-family: "Oswald", system-ui, sans-serif;
   font-weight: 700;
