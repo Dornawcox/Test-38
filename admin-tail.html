@@ -1,0 +1,692 @@
+    <!-- Modal footer: type-specific dynamic fields injected here -->
+    <div id="ed-type-fields"></div>
+    </div><!-- end modal-body -->
+
+    <div class="modal-foot" style="flex-wrap:wrap;gap:.5rem;">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ghost" onclick="downloadJSON()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15H4a1 1 0 01-1-1V4a1 1 0 011-1h5l4 4v7a1 1 0 01-1 1z"/><path d="M9 3v4h4"/><path d="M7 11v4M5 13l2 2 2-2"/></svg>
+        Download JSON
+      </button>
+      <button class="btn btn-ghost" onclick="submitToGitLab()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.75 10.75L14 7.5l-3.25-3.25"/><path d="M7 7.5h7"/><path d="M2 14V3"/></svg>
+        Submit to GitLab
+      </button>
+      <button class="btn btn-olive" onclick="saveCard()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13h8a1 1 0 001-1V7l-4-4H4a1 1 0 00-1 1v8a1 1 0 001 1z"/><path d="M9 3v4h4"/><path d="M6 8h4M6 11h4"/></svg>
+        Save &amp; Publish
+      </button>
+    </div>
+  </div><!-- end .modal -->
+</div><!-- end #editor-modal -->
+
+<!-- ─── CONTRIBUTION FORM MODAL (public-facing, no token needed) ─── -->
+<div class="modal-overlay" id="contrib-modal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-head">
+      <h3>Submit a Contribution</h3>
+      <button class="close" onclick="document.getElementById('contrib-modal').classList.remove('open')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box" style="margin-bottom:1rem;">
+        <h4>How this works</h4>
+        Filling this form creates a pre-populated GitLab issue in the commons-registry repository.
+        A steward reviews it and merges the entry within 1–5 days. No account required to submit —
+        but creating a free GitLab account lets you track your submission.
+      </div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Your Name / Org</label>
+          <input type="text" id="cf-name" placeholder="e.g. Jane — Green Hollow Farm"></div>
+        <div class="form-group full"><label>Contribution Type</label>
+          <select id="cf-type" onchange="updateContribFields()">
+            <option value="">— select —</option>
+            <option value="new-tool">Submit a new Tool</option>
+            <option value="new-project">Submit a new Project</option>
+            <option value="new-event">Submit an Event</option>
+            <option value="new-resource">Submit a Resource / Inspiration</option>
+            <option value="update">Propose an update to existing card</option>
+            <option value="resource-link">Add a resource link</option>
+            <option value="attribution">Add attribution</option>
+            <option value="issue">Report an issue</option>
+          </select>
+        </div>
+        <div class="form-group full" id="cf-title-wrap" style="display:none;"><label>Card Title</label>
+          <input type="text" id="cf-title" placeholder="Name of the tool, project, or event"></div>
+        <div class="form-group full"><label>URL or Resource Description</label>
+          <input type="url" id="cf-url" placeholder="https:// or describe your contribution…"></div>
+        <div class="form-group full"><label>Attribution &amp; Context</label>
+          <textarea id="cf-context" rows="4" placeholder="Who created this? What is it for? Any consent or access notes?"></textarea></div>
+        <div class="form-group full"><label>Communities (where should this appear?)</label>
+          <div class="multi-check">
+            <label><input type="checkbox" id="cf-c-farmhack" value="farmhack"> Farm Hack</label>
+            <label><input type="checkbox" id="cf-c-openteam" value="openteam" checked> OpenTEAM</label>
+            <label><input type="checkbox" id="cf-c-giaa" value="giaa"> GIAA</label>
+            <label><input type="checkbox" id="cf-c-goat" value="goat"> GOAT</label>
+            <label><input type="checkbox" id="cf-c-akc" value="akc"> Ag Knowledge Concordance</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('contrib-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-olive" onclick="submitContribToGitLab()">
+        → Submit via GitLab Issue
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── JSON PREVIEW MODAL ─── -->
+<div class="modal-overlay" id="json-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-head">
+      <h3>JSON Preview</h3>
+      <button class="close" onclick="document.getElementById('json-modal').classList.remove('open')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <pre id="json-preview" style="background:var(--bg);border:1px solid var(--rule);border-radius:var(--r);padding:1rem;font-size:.78rem;overflow-x:auto;max-height:60vh;white-space:pre-wrap;word-break:break-all;"></pre>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('json-modal').classList.remove('open')">Close</button>
+      <button class="btn btn-olive" onclick="doDownloadJSON()">⬇ Download File</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GIT PLATFORM ABSTRACTION LAYER
+// Supports GitHub, GitLab, and Gitea/Forgejo/Codeberg
+// ============================================================
+
+const GitAdapters = {
+  github: {
+    name: 'GitHub',
+    base: () => 'https://api.github.com',
+    hdrs: (t) => ({ 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' }),
+    async getUser(token) {
+      const r = await fetch(this.base() + '/user', { headers: this.hdrs(token) });
+      if (!r.ok) throw new Error('Invalid GitHub token');
+      const u = await r.json();
+      return { login: u.login, name: u.name || u.login, avatar: u.avatar_url };
+    },
+    async readFile(token, repo, path, branch) {
+      const r = await fetch(this.base() + '/repos/' + repo + '/contents/' + path + '?ref=' + branch, { headers: this.hdrs(token) });
+      if (!r.ok) return { exists: false, content: null, sha: null };
+      const d = await r.json();
+      return { exists: true, content: JSON.parse(atob(d.content)), sha: d.sha };
+    },
+    async writeFile(token, repo, path, content, message, branch, sha) {
+      const body = { message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))), branch };
+      if (sha) body.sha = sha;
+      const r = await fetch(this.base() + '/repos/' + repo + '/contents/' + path, {
+        method: 'PUT', headers: this.hdrs(token), body: JSON.stringify(body)
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Write failed'); }
+      return true;
+    }
+  },
+
+  gitlab: {
+    name: 'GitLab',
+    base: (cfg) => (cfg.instance || 'https://gitlab.com') + '/api/v4',
+    hdrs: (t) => ({ 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }),
+    async getUser(token, cfg) {
+      const r = await fetch(this.base(cfg) + '/user', { headers: this.hdrs(token) });
+      if (!r.ok) throw new Error('Invalid GitLab token');
+      const u = await r.json();
+      return { login: u.username, name: u.name, avatar: u.avatar_url };
+    },
+    async readFile(token, repo, path, branch, cfg) {
+      const encodedPath = encodeURIComponent(path);
+      const encodedRepo = encodeURIComponent(repo);
+      const r = await fetch(this.base(cfg) + '/projects/' + encodedRepo + '/repository/files/' + encodedPath + '?ref=' + branch, { headers: this.hdrs(token) });
+      if (!r.ok) return { exists: false, content: null, sha: null };
+      const d = await r.json();
+      try { return { exists: true, content: JSON.parse(atob(d.content)), sha: d.last_commit_id }; }
+      catch(e) { return { exists: true, content: [], sha: d.last_commit_id }; }
+    },
+    async writeFile(token, repo, path, content, message, branch, sha, cfg) {
+      const encodedPath = encodeURIComponent(path);
+      const encodedRepo = encodeURIComponent(repo);
+      const body = { branch, commit_message: message, content: JSON.stringify(content, null, 2) };
+      const exists = !!sha;
+      const r = await fetch(this.base(cfg) + '/projects/' + encodedRepo + '/repository/files/' + encodedPath, {
+        method: exists ? 'PUT' : 'POST',
+        headers: this.hdrs(token),
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Write failed'); }
+      return true;
+    },
+    // Build a pre-filled new-file URL (no token needed — opens GitLab web editor)
+    newFileUrl(repo, path, content, instance) {
+      const base = (instance || 'https://gitlab.com') + '/' + repo + '/-/new/main/';
+      const params = new URLSearchParams({ file_name: path, content: content });
+      return base + '?' + params.toString();
+    },
+    // Build a pre-filled new-issue URL for contributions
+    newIssueUrl(repo, title, body, instance) {
+      const base = (instance || 'https://gitlab.com') + '/' + repo + '/-/issues/new';
+      const params = new URLSearchParams({ 'issue[title]': title, 'issue[description]': body });
+      return base + '?' + params.toString();
+    }
+  }
+};
+
+// ============================================================
+// SCHEMAS — type-specific field definitions
+// ============================================================
+
+const SCHEMAS = {
+  tool: {
+    label: 'Tool',
+    color: 'var(--olive)',
+    fields: [
+      { id:'version', label:'Version', type:'text', placeholder:'v1.0', half:true },
+      { id:'maturity', label:'Maturity', type:'select', options:['prototype','active','stable','deprecated'], half:true },
+      { id:'tool_type', label:'Tool Type', type:'select',
+        options:['field-tool','registry','assessment','intake','interview-kit','governance','hardware','software','protocol','design'], half:true },
+      { id:'live_url', label:'Live URL', type:'url', placeholder:'https://...', full:true },
+      { id:'repo_url', label:'Source Repository', type:'url', placeholder:'https://github.com/...', full:true },
+      { id:'handbooks', label:'Handbooks / Docs URL', type:'url', placeholder:'https://...', full:true },
+      { id:'contribute_url', label:'Contribute URL', type:'url', placeholder:'https://...', half:true },
+      { id:'screenshot', label:'Screenshot URL', type:'url', placeholder:'https://image.thum.io/...', full:true },
+    ]
+  },
+  project: {
+    label: 'Project',
+    color: 'var(--sky)',
+    fields: [
+      { id:'status', label:'Status', type:'select', options:['active','archived','seeking-collaborators','planning'], half:true },
+      { id:'cat', label:'Category', type:'select', options:['data-trust','commons','sovereignty','interop','regen-econ','infrastructure'], half:true },
+      { id:'phase', label:'Phase', type:'text', placeholder:'Collabathon / Active development / Published', full:true },
+      { id:'outputs', label:'Outputs', type:'textarea', placeholder:'Published site · ETA rubric · Documentation...', full:true },
+      { id:'repo_url', label:'Source Repository', type:'url', placeholder:'https://github.com/...', half:true },
+      { id:'site_url', label:'Project Site URL', type:'url', placeholder:'https://...', half:true },
+    ]
+  },
+  event: {
+    label: 'Event',
+    color: 'var(--earth)',
+    fields: [
+      { id:'start', label:'Start Date/Time', type:'datetime-local', half:true },
+      { id:'end', label:'End Date/Time', type:'datetime-local', half:true },
+      { id:'location', label:'Location', type:'text', placeholder:'Online / City, Country', half:true },
+      { id:'format', label:'Format', type:'select', options:['virtual','in-person','hybrid'], half:true },
+      { id:'url', label:'Event Page URL', type:'url', placeholder:'https://...', full:true },
+      { id:'registration_url', label:'Registration URL', type:'url', placeholder:'https://...', full:true },
+      { id:'series', label:'Series Name', type:'text', placeholder:'Monthly Community Call', half:true },
+      { id:'recurrence', label:'Recurrence', type:'text', placeholder:'Monthly · third Thursday', half:true },
+    ]
+  },
+  library: {
+    label: 'Resource / Inspiration',
+    color: '#6b4c9e',
+    fields: [
+      { id:'resource_type', label:'Resource Type', type:'select', options:['book','essay','tool','dataset','film','podcast','report'], half:true },
+      { id:'author', label:'Author(s)', type:'text', placeholder:'Wendell Berry', half:true },
+      { id:'year', label:'Year', type:'text', placeholder:'2004', half:true },
+      { id:'canonical_url', label:'Canonical URL', type:'url', placeholder:'https://...', half:true },
+    ]
+  },
+  dataset: {
+    label: 'Dataset',
+    color: '#236b8e',
+    fields: [
+      { id:'format', label:'Format', type:'text', placeholder:'CSV · JSON · GeoJSON', half:true },
+      { id:'api_url', label:'API / Download URL', type:'url', placeholder:'https://...', full:true },
+      { id:'update_freq', label:'Update Frequency', type:'text', placeholder:'Daily · Monthly · One-time', half:true },
+      { id:'spatial_coverage', label:'Spatial Coverage', type:'text', placeholder:'Northeast USA', half:true },
+    ]
+  }
+};
+
+// ============================================================
+// CONFIG
+// ============================================================
+
+function getConfig() {
+  return {
+    platform: document.getElementById('cfg-platform')?.value || 'gitlab',
+    token: document.getElementById('cfg-token')?.value || '',
+    repo: document.getElementById('cfg-repo')?.value || 'dornawcox/commons-registry',
+    branch: document.getElementById('cfg-branch')?.value || 'main',
+    instance: document.getElementById('cfg-instance')?.value || '',
+    pagesUrl: document.getElementById('cfg-pages')?.value || ''
+  };
+}
+
+function getAdapter() { return GitAdapters[getConfig().platform] || GitAdapters.gitlab; }
+
+function saveConfig() {
+  var cfg = getConfig();
+  sessionStorage.setItem('reg-cfg', JSON.stringify(cfg));
+  document.getElementById('cfg-saved').style.display = 'inline';
+  setTimeout(function() { document.getElementById('cfg-saved').style.display = 'none'; }, 2000);
+}
+
+function restoreConfig() {
+  try {
+    var s = JSON.parse(sessionStorage.getItem('reg-cfg') || '{}');
+    if (s.platform) document.getElementById('cfg-platform').value = s.platform;
+    if (s.token)    document.getElementById('cfg-token').value = s.token;
+    if (s.repo)     document.getElementById('cfg-repo').value = s.repo;
+    if (s.branch)   document.getElementById('cfg-branch').value = s.branch;
+    if (s.instance) { document.getElementById('cfg-instance').value = s.instance; }
+    if (s.pagesUrl) document.getElementById('cfg-pages').value = s.pagesUrl;
+    onPlatformChange();
+  } catch(e) {}
+}
+
+function onPlatformChange() {
+  var p = document.getElementById('cfg-platform')?.value;
+  var wrap = document.getElementById('cfg-instance-wrap');
+  var tokenHelp = document.getElementById('cfg-token-help');
+  var tokenLabel = document.getElementById('cfg-token-label');
+  if (!wrap) return;
+  if (p === 'github') {
+    wrap.style.display = 'none';
+    tokenLabel.textContent = 'Personal Access Token (repo scope)';
+    tokenHelp.innerHTML = 'Create at <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank">github.com → Settings → Tokens</a>. Stored in session only.';
+  } else if (p === 'gitlab') {
+    wrap.style.display = 'block';
+    tokenLabel.textContent = 'Personal Access Token (api scope)';
+    tokenHelp.innerHTML = 'Create at <a href="https://gitlab.com/-/user_settings/personal_access_tokens" target="_blank">gitlab.com → Profile → Access Tokens</a>. Scope: <code>api</code>. Stored in session only.';
+  } else {
+    wrap.style.display = 'block';
+    tokenLabel.textContent = 'Personal Access Token';
+    tokenHelp.textContent = 'Stored in browser session only.';
+  }
+}
+
+function showCI(platform) {
+  document.querySelectorAll('.ci-block').forEach(function(b){ b.style.display='none'; });
+  var el = document.getElementById('ci-'+platform);
+  if (el) el.style.display='block';
+}
+
+async function testConnection() {
+  var cfg = getConfig();
+  var adapter = getAdapter();
+  var out = document.getElementById('conn-result');
+  if (!cfg.token) { out.innerHTML = '<span style="color:var(--red)">Enter a token first.</span>'; return; }
+  out.innerHTML = '<span style="color:var(--muted)">Connecting to ' + adapter.name + '…</span>';
+  try {
+    var user = await adapter.getUser(cfg.token, cfg);
+    document.getElementById('user-name').textContent = user.name || user.login;
+    document.getElementById('user-avatar').textContent = (user.name || user.login).charAt(0).toUpperCase();
+    out.innerHTML = '<span style="color:var(--olive)">✓ Connected as <strong>' + (user.name || user.login) + '</strong></span>';
+  } catch(e) {
+    out.innerHTML = '<span style="color:var(--red)">✗ ' + e.message + '</span>';
+  }
+}
+
+// ============================================================
+// EDITOR: open, type-fields, build card object
+// ============================================================
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.sidebar .nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var page = document.getElementById('p-' + id);
+  if (page) page.classList.add('active');
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+}
+
+function openNewCard(type) {
+  // Clear all fields
+  ['ed-id','ed-title','ed-sub','ed-desc','ed-tags','ed-region','ed-steward','ed-hylo','ed-url','ed-discuss','ed-repo'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ed-status').value = 'draft';
+  document.getElementById('ed-type').value = type || 'tool';
+  updateEditorFields();
+  document.getElementById('editor-modal').classList.add('open');
+  document.getElementById('editor-title').textContent = 'New ' + (SCHEMAS[type || 'tool']?.label || 'Card');
+}
+
+function openEditor(type, id) {
+  document.getElementById('editor-modal').classList.add('open');
+  document.getElementById('editor-title').textContent = 'Edit: ' + id;
+  document.getElementById('ed-type').value = type || 'tool';
+  updateEditorFields();
+}
+
+function updateEditorFields() {
+  var type = document.getElementById('ed-type').value;
+  var schema = SCHEMAS[type] || SCHEMAS.tool;
+  var container = document.getElementById('ed-type-fields');
+  if (!container) return;
+
+  var html = '<div style="border-top:1px solid var(--rule);margin-top:.8rem;padding-top:.8rem;">';
+  html += '<div style="font-family:var(--f-mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.8rem;">Type-specific fields — ' + schema.label + '</div>';
+  html += '<div class="form-grid">';
+  schema.fields.forEach(function(f) {
+    var cls = f.full ? 'form-group full' : 'form-group';
+    html += '<div class="' + cls + '"><label>' + f.label + '</label>';
+    if (f.type === 'select') {
+      html += '<select id="ts-' + f.id + '">';
+      f.options.forEach(function(o){ html += '<option value="' + o + '">' + o + '</option>'; });
+      html += '</select>';
+    } else if (f.type === 'textarea') {
+      html += '<textarea id="ts-' + f.id + '" placeholder="' + (f.placeholder||'') + '"></textarea>';
+    } else {
+      html += '<input type="' + f.type + '" id="ts-' + f.id + '" placeholder="' + (f.placeholder||'') + '">';
+    }
+    html += '</div>';
+  });
+
+  // ETA Score section
+  html += '<div class="form-group full" style="border-top:1px dashed var(--rule);padding-top:.8rem;margin-top:.2rem;">';
+  html += '<label>ETA Score (Ethical Technology Assessment)</label>';
+  html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-top:.4rem;">';
+  var dims = ['Data Sovereignty','Accessibility','Ecological Impact','Community Benefit','Transparency'];
+  dims.forEach(function(d){
+    var did = 'ts-eta-' + d.toLowerCase().replace(/\s+/g,'-');
+    html += '<div style="text-align:center;"><div style="font-size:.6rem;color:var(--muted);margin-bottom:.2rem;">' + d + '</div>';
+    html += '<input type="number" id="' + did + '" min="0" max="100" placeholder="—" style="text-align:center;font-weight:700;"></div>';
+  });
+  html += '</div>';
+  html += '<div class="help">Score each dimension 0–100. Overall is averaged automatically.</div></div>';
+
+  // License section
+  html += '<div class="form-group"><label>License</label>';
+  html += '<select id="ts-license">';
+  [['CC-BY-4.0','Creative Commons Attribution 4.0'],['CC-BY-SA-4.0','CC Attribution-ShareAlike 4.0'],
+   ['CC0','CC0 — Public Domain'],['MIT','MIT License'],['GPL-3.0','GPL v3'],
+   ['CERN-OHL-S-2.0','CERN Open Hardware v2 (Strongly Reciprocal)'],
+   ['openteam-data-use-v2','OpenTEAM Data Use Agreement v2'],
+   ['custom','Custom — describe in notes']].forEach(function(l){
+    html += '<option value="' + l[0] + '">' + l[1] + '</option>';
+  });
+  html += '</select></div>';
+  html += '<div class="form-group"><label>License Notes</label>';
+  html += '<input type="text" id="ts-license-notes" placeholder="Any additional access or consent conditions..."></div>';
+
+  html += '</div></div>'; // end form-grid, type-fields
+  container.innerHTML = html;
+}
+
+// ============================================================
+// BUILD CARD OBJECT FROM FORM
+// ============================================================
+
+function buildCard() {
+  var type = document.getElementById('ed-type').value;
+  var schema = SCHEMAS[type] || SCHEMAS.tool;
+
+  var id = document.getElementById('ed-id').value ||
+    (document.getElementById('ed-title').value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g,'');
+
+  // ETA dimensions
+  var dims = ['data-sovereignty','accessibility','ecological-impact','community-benefit','transparency'];
+  var dimNames = ['Data Sovereignty','Accessibility','Ecological Impact','Community Benefit','Transparency'];
+  var etaDims = {};
+  var scores = [];
+  dims.forEach(function(d, i) {
+    var el = document.getElementById('ts-eta-' + d);
+    var val = el && el.value ? parseInt(el.value) : null;
+    if (val !== null) { etaDims[d] = val; scores.push(val); }
+  });
+  var etaOverall = scores.length ? Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length) : null;
+
+  // Type-specific fields
+  var typeData = {};
+  (schema.fields || []).forEach(function(f) {
+    var el = document.getElementById('ts-' + f.id);
+    if (el && el.value) typeData[f.id] = el.value;
+  });
+
+  var communities = Array.from(document.querySelectorAll('#editor-modal .multi-check input:checked')).map(function(cb){ return cb.value; });
+
+  var card = {
+    id: id,
+    type: type,
+    title: document.getElementById('ed-title').value,
+    subtitle: document.getElementById('ed-sub').value,
+    description: document.getElementById('ed-desc').value,
+    status: document.getElementById('ed-status').value,
+    communities: communities,
+    tags: (document.getElementById('ed-tags').value || '').split(',').map(function(t){ return t.trim(); }).filter(Boolean),
+    category: document.getElementById('ed-cat')?.value || '',
+    region: document.getElementById('ed-region').value,
+    steward: {
+      name: document.getElementById('ed-steward').value,
+      hylo_profile: document.getElementById('ed-hylo').value
+    },
+    links: {
+      canonical: document.getElementById('ed-url').value,
+      discussion: document.getElementById('ed-discuss').value,
+      source_repo: document.getElementById('ed-repo').value
+    },
+    license: {
+      spdx: document.getElementById('ts-license')?.value || 'CC-BY-4.0',
+      notes: document.getElementById('ts-license-notes')?.value || ''
+    },
+    dates: {
+      created: new Date().toISOString().split('T')[0],
+      updated: new Date().toISOString().split('T')[0]
+    },
+    source_org: 'openteam'
+  };
+
+  // Merge type-specific fields at top level
+  Object.assign(card, typeData);
+
+  // ETA score
+  if (etaOverall !== null) {
+    card.eta_score = {
+      overall: etaOverall,
+      version: '2.0',
+      assessed_date: new Date().toISOString().split('T')[0],
+      dimensions: etaDims
+    };
+  }
+
+  return card;
+}
+
+// ============================================================
+// DOWNLOAD JSON
+// ============================================================
+
+var _lastCard = null;
+
+function downloadJSON() {
+  _lastCard = buildCard();
+  var json = JSON.stringify(_lastCard, null, 2);
+  document.getElementById('json-preview').textContent = json;
+  document.getElementById('json-modal').classList.add('open');
+}
+
+function doDownloadJSON() {
+  if (!_lastCard) return;
+  var json = JSON.stringify(_lastCard, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (_lastCard.type || 'card') + 's/' + (_lastCard.id || 'entry') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// SUBMIT TO GITLAB (pre-filled web editor URL — no token needed)
+// ============================================================
+
+function submitToGitLab() {
+  var cfg = getConfig();
+  var card = buildCard();
+  var json = JSON.stringify(card, null, 2);
+
+  // File path in the registry repo
+  var filePath = 'registry/' + card.type + 's/' + (card.id || 'new-entry') + '.json';
+
+  if (cfg.platform === 'gitlab' || !cfg.token) {
+    // Open GitLab web editor pre-filled (no auth required on public repo)
+    var instance = cfg.instance || 'https://gitlab.com';
+    var repo = cfg.repo || 'openteam/commons-registry';
+    var url = instance + '/' + repo + '/-/new/main/?' +
+      'file_name=' + encodeURIComponent(filePath) +
+      '&content=' + encodeURIComponent(json);
+    window.open(url, '_blank');
+  } else if (cfg.platform === 'github') {
+    // GitHub new file URL
+    var ghUrl = 'https://github.com/' + (cfg.repo || 'openteam/commons-registry') +
+      '/new/main/?filename=' + encodeURIComponent(filePath) +
+      '&value=' + encodeURIComponent(json);
+    window.open(ghUrl, '_blank');
+  } else {
+    alert('Open the JSON preview, copy the content, then create a new file at:\n' + filePath);
+    downloadJSON();
+  }
+}
+
+// ============================================================
+// SAVE CARD (direct API write — requires token)
+// ============================================================
+
+async function saveCard() {
+  var cfg = getConfig();
+  var adapter = getAdapter();
+  if (!cfg.token || !cfg.repo) {
+    alert('Connect to your Git platform first (Setup & Config tab).');
+    return;
+  }
+
+  var card = buildCard();
+  var filePath = 'registry/' + card.type + 's/' + card.id + '.json';
+
+  try {
+    var file = await adapter.readFile(cfg.token, cfg.repo, filePath, cfg.branch, cfg);
+    var sha = file.exists ? file.sha : null;
+
+    var verb = file.exists ? 'Update' : 'Add';
+    await adapter.writeFile(cfg.token, cfg.repo, filePath, card,
+      verb + ' ' + card.type + ' card: ' + card.title,
+      cfg.branch, sha, cfg);
+
+    alert('✓ Card saved to ' + cfg.repo + '!\n\nFile: ' + filePath + '\n\nCI/CD pipeline will rebuild the registry feeds.');
+    closeModal();
+  } catch(e) {
+    alert('✗ Error: ' + e.message + '\n\nTry "Download JSON" and commit manually.');
+  }
+}
+
+// ============================================================
+// CONTRIBUTION FORM → GITLAB ISSUE
+// ============================================================
+
+function updateContribFields() {
+  var type = document.getElementById('cf-type').value;
+  var titleWrap = document.getElementById('cf-title-wrap');
+  var needsTitle = ['new-tool','new-project','new-event','new-resource','update'].includes(type);
+  titleWrap.style.display = needsTitle ? 'block' : 'none';
+}
+
+function submitContribToGitLab() {
+  var name  = document.getElementById('cf-name').value.trim();
+  var type  = document.getElementById('cf-type').value;
+  var title = document.getElementById('cf-title').value.trim();
+  var url   = document.getElementById('cf-url').value.trim();
+  var ctx   = document.getElementById('cf-context').value.trim();
+  var comms = Array.from(document.querySelectorAll('#contrib-modal .multi-check input:checked')).map(function(c){ return c.value; });
+
+  if (!type) { alert('Please select a contribution type.'); return; }
+
+  // Map type to GitLab label
+  var labelMap = {
+    'new-tool':'new-entry,tool',
+    'new-project':'new-entry,project',
+    'new-event':'new-entry,event',
+    'new-resource':'new-entry,resource',
+    'update':'update-request',
+    'resource-link':'resource-link',
+    'attribution':'attribution',
+    'issue':'bug'
+  };
+
+  var issueTitle = type.replace(/-/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  if (title) issueTitle += ': ' + title;
+
+  var issueBody = [
+    '## Submission Details',
+    '',
+    '**Submitted by:** ' + (name || 'Anonymous'),
+    '**Type:** ' + type,
+    title ? ('**Card title:** ' + title) : '',
+    url ? ('**URL:** ' + url) : '',
+    comms.length ? ('**Communities:** ' + comms.join(', ')) : '',
+    '',
+    '## Context & Attribution',
+    '',
+    ctx || '(no context provided)',
+    '',
+    '## For Stewards',
+    '',
+    '- [ ] Review submission for completeness',
+    '- [ ] Assign to correct registry type',
+    '- [ ] Create JSON entry file at `registry/' + (type.replace('new-','') || 'tool') + 's/`',
+    '- [ ] Merge to trigger CI rebuild',
+    '',
+    '---',
+    '*Submitted via Commons Registry Admin — ' + new Date().toLocaleDateString() + '*'
+  ].filter(function(l){ return l !== null && l !== undefined; }).join('\n');
+
+  var cfg = getConfig();
+  var instance = cfg.instance || 'https://gitlab.com';
+  var repo = cfg.repo || 'openteam/commons-registry';
+
+  var issueUrl = instance + '/' + repo + '/-/issues/new?' +
+    'issue[title]=' + encodeURIComponent(issueTitle) +
+    '&issue[description]=' + encodeURIComponent(issueBody);
+
+  window.open(issueUrl, '_blank');
+  document.getElementById('contrib-modal').classList.remove('open');
+}
+
+// ============================================================
+// MODAL UTILITIES
+// ============================================================
+
+function closeModal() {
+  document.getElementById('editor-modal').classList.remove('open');
+}
+
+function filterTable(input, tableId) {
+  var q = input.value.toLowerCase();
+  document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function(tr) {
+    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterType(btn, type, tableId) {
+  btn.closest('.tbl-head').querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function(tr) {
+    tr.style.display = (type === 'all' || tr.dataset.type === type) ? '' : 'none';
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  restoreConfig();
+  updateEditorFields();
+  // Wire contribute button if present on the page
+  var contribBtn = document.getElementById('open-contrib-btn');
+  if (contribBtn) {
+    contribBtn.addEventListener('click', function(){
+      document.getElementById('contrib-modal').classList.add('open');
+    });
+  }
+});
+</script>
+</body>
+</html>
