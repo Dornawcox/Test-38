@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Hack Box — Admin Console</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#1a1a14; --text:#333; --muted:#636363; --subtle:#999;
+  --border:#d5d0c8; --rule:#e5e0d6; --bg:#faf8f1; --surface:#fff;
+  --olive:#3a5a1c; --olive-l:#5a8033; --olive-bg:#eef3e6;
+  --earth:#8b6914; --earth-bg:#fdf5e0; --sky:#236b8e; --sky-bg:#e6f0f7;
+  --rust:#7c4a1e; --red:#9e2b2b; --red-bg:#fce8e8;
+  --purple:#5c4a8a; --purple-bg:#f3f0f8;
+  --teal:#1a6b6b; --teal-bg:#e6f5f5;
+  --f-sans:'IBM Plex Sans',sans-serif;
+  --f-serif:'IBM Plex Serif',Georgia,serif;
+  --f-mono:'IBM Plex Mono',monospace;
+  --r:4px; --r-lg:8px; --ease:.2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:13px;scroll-behavior:smooth}
+body{font-family:var(--f-sans);color:var(--text);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-serif);color:var(--ink);line-height:1.25}
+a{color:var(--olive);text-decoration:none}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+
+/* ─── LAYOUT ─── */
+.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:44px 1fr;min-height:100vh}
+.topbar{grid-column:1/-1;background:var(--ink);color:#fff;display:flex;align-items:center;padding:0 .9rem;gap:.5rem;position:sticky;top:0;z-index:100}
+.topbar .brand{display:flex;align-items:center;gap:.35rem;color:#fff;font-weight:600;font-size:.8rem}
+.topbar .brand svg{width:17px;height:17px}
+.topbar .brand-sub{font-size:.55rem;color:rgba(255,255,255,.5);font-family:var(--f-serif);font-style:italic;margin-left:.25rem}
+.topbar .sep{color:rgba(255,255,255,.2);margin:0 .1rem}
+.topbar .env{font-family:var(--f-mono);font-size:.5rem;background:var(--olive);padding:.06rem .3rem;border-radius:99px;font-weight:500}
+.topbar .node-status{margin-left:auto;display:flex;align-items:center;gap:.4rem}
+.topbar .node-indicator{display:flex;align-items:center;gap:.18rem;font-size:.65rem;color:rgba(255,255,255,.7)}
+.topbar .node-indicator .dot{width:6px;height:6px;border-radius:50%;background:#5a8033}
+.topbar .user-pill{display:flex;align-items:center;gap:.25rem;font-size:.68rem;color:rgba(255,255,255,.7)}
+.topbar .user-pill .avatar{width:20px;height:20px;border-radius:50%;background:var(--olive-l);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;color:#fff}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--rule);padding:.4rem 0;overflow-y:auto;font-size:.7rem}
+.sidebar .nav-section{margin-bottom:.35rem}
+.sidebar .nav-label{font-family:var(--f-mono);font-size:.48rem;text-transform:uppercase;letter-spacing:.06em;color:var(--subtle);padding:.08rem .7rem;font-weight:600;display:flex;align-items:center;gap:.25rem}
+.sidebar .nav-label svg{width:8px;height:8px;opacity:.5}
+.sidebar .nav-item{display:flex;align-items:center;gap:.3rem;padding:.2rem .7rem;font-size:.68rem;color:var(--muted);cursor:pointer;transition:all var(--ease);border-left:2px solid transparent}
+.sidebar .nav-item:hover{background:var(--olive-bg);color:var(--ink)}
+.sidebar .nav-item.active{background:var(--olive-bg);color:var(--olive);border-left-color:var(--olive);font-weight:600}
+.sidebar .nav-item svg{width:11px;height:11px;flex-shrink:0}
+.sidebar .nav-item .badge{margin-left:auto;font-family:var(--f-mono);font-size:.48rem;background:var(--earth-bg);color:var(--earth);padding:.03rem .2rem;border-radius:99px;font-weight:600}
+.sidebar .nav-item .badge-new{background:var(--purple-bg);color:var(--purple)}
+.sidebar .nav-item .badge-teal{background:var(--teal-bg);color:var(--teal)}
+.sidebar .nav-divider{height:1px;background:var(--rule);margin:.3rem .7rem}
+
+.main{padding:.8rem 1.1rem;overflow-y:auto}
+
+/* ─── PAGE SECTIONS ─── */
+.page{display:none}
+.page.active{display:block}
+.page-head{margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.page-head h1{font-size:1.1rem}
+.page-head .subtitle{font-size:.72rem;color:var(--muted);margin-left:.2rem;font-family:var(--f-serif);font-style:italic}
+.page-head .actions{margin-left:auto;display:flex;gap:.25rem}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:.2rem;padding:.25rem .55rem;font-family:var(--f-sans);font-weight:600;font-size:.65rem;border:1.5px solid transparent;border-radius:var(--r);cursor:pointer;transition:all var(--ease);white-space:nowrap}
+.btn-fill{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-olive{background:var(--olive);color:#fff;border-color:var(--olive)}
+.btn-olive:hover{background:var(--olive-l)}
+.btn-purple{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-teal{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--red)}
+.btn svg{width:10px;height:10px}
+.btn-sm{padding:.15rem .35rem;font-size:.58rem}
+.btn-lg{padding:.35rem .8rem;font-size:.72rem}
+
+/* ─── STAT CARDS ─── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:.4rem;margin-bottom:.9rem}
+.stat-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.5rem .6rem}
+.stat-card .stat-label{font-family:var(--f-mono);font-size:.45rem;text-transform:uppercase;letter-spacing:.05em;color:var(--subtle);font-weight:500;margin-bottom:.08rem}
+.stat-card .stat-val{font-family:var(--f-serif);font-size:1.1rem;color:var(--ink);font-weight:600}
+.stat-card .stat-sub{font-size:.55rem;color:var(--muted);margin-top:.04rem}
+.stat-card.highlight{border-color:var(--olive);background:var(--olive-bg)}
+.stat-card.highlight .stat-val{color:var(--olive)}
+
+/* ─── TAGS & BADGES ─── */
+.tag{font-family:var(--f-mono);font-size:.48rem;font-weight:500;padding:.05rem .28rem;border-radius:99px;border:1px solid var(--rule);color:var(--muted);display:inline-block;margin:.03rem .06rem .03rem 0}
+.tag-olive{border-color:#c7d9b3;background:var(--olive-bg);color:var(--olive)}
+.tag-earth{border-color:#e5d5a8;background:var(--earth-bg);color:var(--earth)}
+.tag-sky{border-color:#b3d1e5;background:var(--sky-bg);color:var(--sky)}
+.tag-purple{border-color:#c4b8d9;background:var(--purple-bg);color:var(--purple)}
+.tag-teal{border-color:#a8d5d5;background:var(--teal-bg);color:var(--teal)}
+.tag-red{border-color:#e5b3b3;background:var(--red-bg);color:var(--red)}
+.status{display:inline-flex;align-items:center;gap:.12rem;font-family:var(--f-mono);font-size:.5rem;font-weight:600;padding:.06rem .25rem;border-radius:99px}
+.status-active{background:var(--olive-bg);color:var(--olive)}
+.status-pending{background:var(--earth-bg);color:var(--earth)}
+.status-disabled{background:var(--bg);color:var(--subtle)}
+.status-syncing{background:var(--sky-bg);color:var(--sky)}
+.status-error{background:var(--red-bg);color:var(--red)}
+
+/* ─── TABLES ─── */
+.tbl-wrap{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);overflow:hidden;margin-bottom:.7rem}
+.tbl-head{display:flex;align-items:center;gap:.35rem;padding:.45rem .6rem;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.tbl-search{font-family:var(--f-sans);font-size:.68rem;padding:.2rem .4rem;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);flex:1;max-width:200px;outline:none}
+.tbl-search:focus{border-color:var(--olive)}
+.chip{font-family:var(--f-mono);font-size:.52rem;font-weight:500;padding:.1rem .3rem;border:1px solid var(--border);border-radius:99px;background:transparent;color:var(--muted);cursor:pointer}
+.chip:hover{border-color:var(--olive);color:var(--olive)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-family:var(--f-mono);font-size:.5rem;text-transform:uppercase;letter-spacing:.05em;color:var(--subtle);font-weight:600;padding:.3rem .6rem;border-bottom:1px solid var(--rule);background:var(--bg)}
+td{padding:.35rem .6rem;border-bottom:1px solid var(--rule);font-size:.68rem;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(58,90,28,.03)}
+
+/* ─── FORMS ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.form-group{margin-bottom:.6rem}
+.form-group.full{grid-column:1/-1}
+.form-group label{display:block;font-family:var(--f-mono);font-size:.52rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:500;margin-bottom:.15rem}
+.form-group input,.form-group select,.form-group textarea{width:100%;font-family:var(--f-sans);font-size:.72rem;padding:.28rem .45rem;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--ink);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--olive)}
+.form-group .help{font-size:.58rem;color:var(--subtle);margin-top:.08rem}
+.form-group .multi-check{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.08rem}
+.form-group .multi-check label{display:inline-flex;align-items:center;gap:.12rem;font-size:.65rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer}
+.form-group .multi-check input[type="checkbox"]{width:auto;accent-color:var(--olive)}
+
+/* ─── INFO BOXES ─── */
+.help-box{background:var(--earth-bg);border:1px solid #e5d5a8;border-radius:var(--r-lg);padding:.6rem .8rem;margin-bottom:.7rem;font-size:.72rem;line-height:1.4}
+.help-box h4{font-size:.78rem;color:var(--earth);margin-bottom:.12rem}
+.info-box{background:var(--sky-bg);border:1px solid #b3d1e5;border-radius:var(--r-lg);padding:.6rem .8rem;margin-bottom:.7rem;font-size:.72rem;line-height:1.4}
+.info-box h4{font-size:.78rem;color:var(--sky);margin-bottom:.12rem}
+.gov-box{background:var(--purple-bg);border:1px solid #c4b8d9;border-radius:var(--r-lg);padding:.6rem .8rem;margin-bottom:.7rem;font-size:.72rem;line-height:1.4}
+.gov-box h4{font-size:.78rem;color:var(--purple);margin-bottom:.12rem;display:flex;align-items:center;gap:.22rem}
+.gov-box h4 svg{width:12px;height:12px}
+.teal-box{background:var(--teal-bg);border:1px solid #a8d5d5;border-radius:var(--r-lg);padding:.6rem .8rem;margin-bottom:.7rem;font-size:.72rem;line-height:1.4}
+.teal-box h4{font-size:.78rem;color:var(--teal);margin-bottom:.12rem;display:flex;align-items:center;gap:.22rem}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:.7rem}
+.tab{padding:.35rem .7rem;font-size:.68rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--olive);border-bottom-color:var(--olive)}
+.tab .tab-badge{font-family:var(--f-mono);font-size:.45rem;background:var(--bg);border:1px solid var(--rule);padding:.03rem .15rem;border-radius:99px;margin-left:.18rem}
+
+/* ─── COLLAPSIBLE SECTIONS ─── */
+.collapsible{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);margin-bottom:.5rem;overflow:hidden}
+.collapsible-head{display:flex;align-items:center;gap:.4rem;padding:.5rem .7rem;cursor:pointer}
+.collapsible-head:hover{background:var(--bg)}
+.collapsible-head h3{font-size:.78rem;flex:1;display:flex;align-items:center;gap:.3rem}
+.collapsible-head h3 svg{width:13px;height:13px;color:var(--purple)}
+.collapsible-head .toggle-icon{width:14px;height:14px;color:var(--muted);transition:transform var(--ease)}
+.collapsible.open .collapsible-head .toggle-icon{transform:rotate(180deg)}
+.collapsible-body{display:none;padding:0 .7rem .7rem;border-top:1px solid var(--rule)}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-meta{display:flex;gap:.3rem;align-items:center}
+
+/* ─── MODULE CARDS ─── */
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:.45rem;margin-bottom:.7rem}
+.module-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.6rem;cursor:pointer;transition:all var(--ease);position:relative}
+.module-card:hover{border-color:var(--olive);box-shadow:0 2px 6px rgba(58,90,28,.08)}
+.module-card.installed{border-color:var(--olive);background:linear-gradient(135deg,var(--olive-bg) 0%,var(--surface) 100%)}
+.module-card.installed::after{content:'✓';position:absolute;top:.4rem;right:.4rem;width:13px;height:13px;background:var(--olive);color:#fff;border-radius:50%;font-size:.5rem;display:flex;align-items:center;justify-content:center}
+.module-card.beta{border-style:dashed}
+.module-card .mod-icon{width:22px;height:22px;background:var(--bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:.3rem}
+.module-card .mod-icon svg{width:11px;height:11px;color:var(--purple)}
+.module-card.installed .mod-icon{background:var(--olive)}
+.module-card.installed .mod-icon svg{color:#fff}
+.module-card h4{font-size:.68rem;margin-bottom:.1rem}
+.module-card p{font-size:.58rem;color:var(--muted);margin-bottom:.3rem;line-height:1.25}
+.module-card .mod-tags{display:flex;gap:.12rem;flex-wrap:wrap}
+.module-card .mod-status{font-family:var(--f-mono);font-size:.45rem;position:absolute;top:.4rem;right:.4rem;padding:.05rem .18rem;border-radius:99px;background:var(--earth-bg);color:var(--earth)}
+
+/* ─── PRESET CARDS ─── */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem;margin-bottom:.8rem}
+.preset-card{background:var(--surface);border:2px solid var(--rule);border-radius:var(--r-lg);padding:.7rem;cursor:pointer;transition:all var(--ease)}
+.preset-card:hover{border-color:var(--purple);transform:translateY(-1px)}
+.preset-card.selected{border-color:var(--olive);background:var(--olive-bg)}
+.preset-card .preset-header{display:flex;align-items:flex-start;gap:.45rem;margin-bottom:.35rem}
+.preset-card .preset-icon{font-size:1.3rem;flex-shrink:0}
+.preset-card h4{font-size:.8rem;margin-bottom:.08rem}
+.preset-card .preset-type{font-family:var(--f-mono);font-size:.48rem;color:var(--subtle);text-transform:uppercase}
+.preset-card p{font-size:.65rem;color:var(--muted);margin-bottom:.35rem;line-height:1.3}
+.preset-card .preset-modules{font-size:.58rem;color:var(--subtle);margin-bottom:.35rem}
+.preset-card .preset-modules strong{color:var(--ink)}
+.preset-card .preset-peers{background:var(--bg);border-radius:var(--r);padding:.35rem;margin-top:.35rem}
+.preset-card .preset-peers h5{font-size:.55rem;color:var(--teal);margin-bottom:.2rem;font-family:var(--f-mono);text-transform:uppercase}
+.preset-card .preset-peers ul{margin:0;padding:0;list-style:none}
+.preset-card .preset-peers li{font-size:.58rem;color:var(--muted);padding:.06rem 0;display:flex;align-items:center;gap:.2rem}
+.preset-card .preset-peers li::before{content:'';width:4px;height:4px;background:var(--teal);border-radius:50%;flex-shrink:0}
+
+/* ─── NODE/NETWORK CARDS ─── */
+.node-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.45rem .6rem;display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem}
+.node-card:hover{border-color:var(--teal)}
+.node-card .node-icon{width:26px;height:26px;background:var(--teal-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.node-card .node-icon svg{width:13px;height:13px;color:var(--teal)}
+.node-card .node-info{flex:1}
+.node-card .node-info h5{font-size:.68rem;margin-bottom:.04rem}
+.node-card .node-info p{font-size:.58rem;color:var(--muted)}
+.node-card .node-status{text-align:right}
+.node-card .node-status .sync-time{font-family:var(--f-mono);font-size:.5rem;color:var(--subtle)}
+
+/* ─── DISCOVERY CARDS ─── */
+.discovery-card{background:var(--surface);border:1px dashed var(--teal);border-radius:var(--r-lg);padding:.65rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.55rem}
+.discovery-card .disc-icon{width:36px;height:36px;background:var(--teal-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.discovery-card .disc-icon svg{width:18px;height:18px;color:var(--teal)}
+.discovery-card .disc-info{flex:1}
+.discovery-card .disc-info h4{font-size:.8rem;margin-bottom:.1rem}
+.discovery-card .disc-info p{font-size:.68rem;color:var(--muted);margin-bottom:.3rem}
+.discovery-card .disc-info .disc-meta{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.3rem}
+.discovery-card .disc-actions{display:flex;gap:.25rem}
+
+/* ─── REPO CARDS ─── */
+.repo-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem .7rem;margin-bottom:.4rem;display:flex;align-items:flex-start;gap:.5rem}
+.repo-card .repo-icon{width:28px;height:28px;background:var(--teal-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.repo-card .repo-icon svg{width:14px;height:14px;color:var(--teal)}
+.repo-card .repo-icon.local{background:var(--olive-bg)}
+.repo-card .repo-icon.local svg{color:var(--olive)}
+.repo-card .repo-icon.mirror{background:var(--sky-bg)}
+.repo-card .repo-icon.mirror svg{color:var(--sky)}
+.repo-card .repo-info{flex:1}
+.repo-card .repo-info h5{font-size:.72rem;margin-bottom:.1rem;display:flex;align-items:center;gap:.25rem}
+.repo-card .repo-info p{font-size:.62rem;color:var(--muted);margin-bottom:.2rem}
+.repo-card .repo-info .repo-meta{display:flex;gap:.4rem;font-family:var(--f-mono);font-size:.52rem;color:var(--subtle)}
+.repo-card .repo-actions{display:flex;flex-direction:column;gap:.15rem;align-items:flex-end}
+
+/* ─── SERVICE ROWS ─── */
+.service-row{display:flex;align-items:center;gap:.45rem;padding:.4rem .55rem;background:var(--bg);border:1px solid var(--rule);border-radius:var(--r);margin-bottom:.28rem}
+.service-row .svc-icon{width:22px;height:22px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);display:flex;align-items:center;justify-content:center}
+.service-row .svc-icon svg{width:11px;height:11px;color:var(--sky)}
+.service-row .svc-info{flex:1}
+.service-row .svc-info h5{font-size:.68rem;margin-bottom:.02rem}
+.service-row .svc-info p{font-size:.55rem;color:var(--muted)}
+.service-row .svc-toggle{display:flex;align-items:center;gap:.25rem}
+.toggle-switch{width:26px;height:14px;background:var(--border);border-radius:99px;position:relative;cursor:pointer}
+.toggle-switch.on{background:var(--olive)}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;background:#fff;border-radius:50%;transition:transform var(--ease)}
+.toggle-switch.on::after{transform:translateX(12px)}
+
+/* ─── DATA OBJECTS ─── */
+.data-obj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.8rem}
+.data-obj-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.65rem}
+.data-obj-card h4{font-size:.78rem;margin-bottom:.25rem;display:flex;align-items:center;gap:.25rem}
+.data-obj-card h4 svg{width:13px;height:13px;color:var(--teal)}
+.data-obj-card p{font-size:.62rem;color:var(--muted);margin-bottom:.3rem;line-height:1.3}
+.data-obj-card .obj-count{font-family:var(--f-mono);font-size:.55rem;color:var(--subtle)}
+
+/* ─── GOVERNANCE ─── */
+.interview-progress{display:flex;gap:.35rem;margin-bottom:.8rem;flex-wrap:wrap}
+.interview-step{flex:1;min-width:75px;background:var(--bg);border:1px solid var(--rule);border-radius:var(--r);padding:.35rem .5rem;text-align:center;cursor:pointer}
+.interview-step:hover{border-color:var(--olive)}
+.interview-step.active{background:var(--purple-bg);border-color:var(--purple)}
+.interview-step.completed{background:var(--olive-bg);border-color:var(--olive)}
+.interview-step .step-num{font-family:var(--f-mono);font-size:.5rem;color:var(--subtle);text-transform:uppercase}
+.interview-step .step-title{font-size:.65rem;font-weight:600;color:var(--ink)}
+.interview-step.active .step-title{color:var(--purple)}
+.interview-step.completed .step-title{color:var(--olive)}
+
+.policy-rule{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem .7rem;margin-bottom:.4rem;display:flex;align-items:flex-start;gap:.55rem}
+.policy-rule .rule-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.policy-rule .rule-icon.permit{background:var(--olive-bg);color:var(--olive)}
+.policy-rule .rule-icon.prohibit{background:var(--red-bg);color:var(--red)}
+.policy-rule .rule-icon.duty{background:var(--earth-bg);color:var(--earth)}
+.policy-rule .rule-icon svg{width:10px;height:10px}
+.policy-rule .rule-body{flex:1}
+.policy-rule .rule-body h5{font-size:.72rem;font-weight:600;margin-bottom:.1rem}
+.policy-rule .rule-body p{font-size:.65rem;color:var(--muted)}
+.policy-rule .rule-body .rule-meta{font-family:var(--f-mono);font-size:.52rem;color:var(--subtle);margin-top:.18rem}
+
+.agreement-stack{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem;margin-bottom:.8rem}
+.agreement-item{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem;text-align:center;cursor:pointer}
+.agreement-item:hover{border-color:var(--olive)}
+.agreement-item.generated{border-color:var(--olive);background:var(--olive-bg)}
+.agreement-item .ag-icon{width:28px;height:28px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .3rem}
+.agreement-item .ag-icon svg{width:14px;height:14px;color:var(--purple)}
+.agreement-item.generated .ag-icon{background:var(--olive)}
+.agreement-item.generated .ag-icon svg{color:#fff}
+.agreement-item h5{font-size:.68rem;margin-bottom:.1rem}
+.agreement-item p{font-size:.58rem;color:var(--muted)}
+
+.device-node{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem .7rem;display:flex;align-items:center;gap:.55rem;margin-bottom:.4rem}
+.device-node .device-icon{width:28px;height:28px;background:var(--sky-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center}
+.device-node .device-icon svg{width:14px;height:14px;color:var(--sky)}
+.device-node .device-info{flex:1}
+.device-node .device-info h5{font-size:.72rem;margin-bottom:.08rem}
+.device-node .device-info p{font-size:.62rem;color:var(--muted)}
+.device-node .device-status{font-family:var(--f-mono);font-size:.52rem;padding:.1rem .3rem;border-radius:99px}
+.device-node .device-status.trusted{background:var(--olive-bg);color:var(--olive)}
+.device-node .device-status.pending{background:var(--earth-bg);color:var(--earth)}
+.device-node .device-status.blocked{background:var(--red-bg);color:var(--red)}
+
+/* ─── ACTIVITY LOG ─── */
+.activity-item{display:flex;gap:.35rem;padding:.35rem 0;border-bottom:1px solid var(--rule);font-size:.68rem}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:5px;height:5px;border-radius:50%;margin-top:.3rem;flex-shrink:0}
+.dot-green{background:var(--olive)}
+.dot-amber{background:var(--earth)}
+.dot-blue{background:var(--sky)}
+.dot-purple{background:var(--purple)}
+.dot-teal{background:var(--teal)}
+.activity-item .time{font-family:var(--f-mono);font-size:.55rem;color:var(--subtle);margin-top:.04rem}
+
+/* ─── GOV MAP ─── */
+.gov-map-canvas{background:var(--bg);border:1px solid var(--rule);border-radius:var(--r-lg);height:260px;display:flex;align-items:center;justify-content:center;margin-bottom:.7rem}
+.gov-map-canvas .placeholder{text-align:center;color:var(--subtle)}
+.gov-map-canvas .placeholder svg{width:32px;height:32px;margin-bottom:.3rem;opacity:.3}
+.gov-map-canvas .placeholder p{font-size:.72rem}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .form-grid{grid-template-columns:1fr}
+  .data-obj-grid{grid-template-columns:1fr}
+}
+
+.toast{position:fixed;bottom:.9rem;right:.9rem;background:var(--ink);color:#fff;padding:.45rem .8rem;border-radius:var(--r);font-size:.68rem;z-index:300;opacity:0;transform:translateY(10px);transition:all .3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ─── SVG ICONS ─── -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-logo" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v8M10 4l-3 3M10 4l3 3"/><path d="M10 12v16"/><path d="M22 4c-2.5 0-4.5 2-4.5 4.5 0 1 .3 1.9.8 2.7l-1.3 1.3 1.5 1.5 1.3-1.3c.8.5 1.7.8 2.7.8 2.5 0 4.5-2 4.5-4.5S24.5 4 22 4z"/><path d="M18 15l-2 2"/><path d="M22 12v16"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27,6.96 12,12.01 20.73,6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 012 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></symbol>
+  <symbol id="i-network" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4"/><path d="M7.5 17.5L10 14"/><path d="M16.5 17.5L14 14"/></symbol>
+  <symbol id="i-hexagon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12,2 2,7 12,12 22,7"/><polyline points="2,17 12,22 22,17"/><polyline points="2,12 12,17 22,12"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="5,3 19,12 5,21"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+  <symbol id="i-farm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M10 9h4"/></symbol>
+  <symbol id="i-tractor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-4l3-3h4l2 3h5a2 2 0 012 2v2h-2"/><path d="M10 10V5a1 1 0 011-1h2"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 20A7 7 0 019.8 6.4C15.5 4 21 7 21 7s1 6-3 10-7 3-7 3z"/><path d="M6.6 18.4C4 16 3.5 12 3.5 12s5.5-2 8.5-1"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9,22 9,12 15,12 15,22"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14"/></symbol>
+  <symbol id="i-hard-drive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+  <symbol id="i-horse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 8s-2-2-4-2c-1.5 0-3 1-3 1l-2 3-4-1-3 4 1 3v5h2v-3l3-2 2 2v3h2v-4l2-3 3 1 1-3v-4z"/><circle cx="18" cy="7" r="1"/></symbol>
+</svg>
+
+<!-- ─── APP SHELL ─── -->
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a class="brand" href="#"><svg><use href="#i-logo"/></svg> Farm Hack Box</a>
+    <span class="brand-sub">Independence through interconnection</span>
+    <span class="sep">|</span>
+    <span class="env">NODE</span>
+    <div class="node-status">
+      <div class="node-indicator"><span class="dot"></span> Online</div>
+      <span class="sep">|</span>
+      <div class="node-indicator" style="opacity:.7">5 peers · 4 mirrors</div>
+    </div>
+    <div class="user-pill">
+      <span>admin</span>
+      <div class="avatar">A</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><svg><use href="#i-dash"/></svg> Dashboard</div>
+    </div>
+    
+    <div class="nav-section">
+      <div class="nav-label"><svg><use href="#i-box"/></svg> Box Configuration</div>
+      <div class="nav-item" onclick="showPage('presets')"><svg><use href="#i-box"/></svg> Box Presets</div>
+      <div class="nav-item" onclick="showPage('modules')"><svg><use href="#i-grid"/></svg> Module Builder</div>
+      <div class="nav-item" onclick="showPage('data-objects')"><svg><use href="#i-database"/></svg> Core Data Objects</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label"><svg><use href="#i-server"/></svg> Infrastructure</div>
+      <div class="nav-item" onclick="showPage('git-hosting')"><svg><use href="#i-git"/></svg> Git &amp; Mirrors <span class="badge badge-teal">4</span></div>
+      <div class="nav-item" onclick="showPage('media')"><svg><use href="#i-image"/></svg> Media Server</div>
+      <div class="nav-item" onclick="showPage('services')"><svg><use href="#i-cpu"/></svg> Service Containers</div>
+      <div class="nav-item" onclick="showPage('hosting')"><svg><use href="#i-hard-drive"/></svg> Hardware</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label"><svg><use href="#i-network"/></svg> Federation</div>
+      <div class="nav-item" onclick="showPage('discovery')"><svg><use href="#i-search"/></svg> Box Discovery <span class="badge badge-new">7</span></div>
+      <div class="nav-item" onclick="showPage('network')"><svg><use href="#i-globe"/></svg> Network &amp; Peers</div>
+      <div class="nav-item" onclick="showPage('moss')"><svg><use href="#i-hexagon"/></svg> Moss / Holochain</div>
+      <div class="nav-item" onclick="showPage('sync')"><svg><use href="#i-refresh"/></svg> Sync Policies</div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-label"><svg><use href="#i-shield"/></svg> Governance Engine</div>
+      <div class="nav-item" onclick="showPage('gov-overview')"><svg><use href="#i-layers"/></svg> Governance Home</div>
+      <div class="nav-item" onclick="showPage('interviews')"><svg><use href="#i-clipboard"/></svg> Interviews</div>
+      <div class="nav-item" onclick="showPage('gov-map')"><svg><use href="#i-map"/></svg> Governance Map</div>
+      <div class="nav-item" onclick="showPage('agreements')"><svg><use href="#i-file-text"/></svg> Agreements</div>
+      <div class="nav-item" onclick="showPage('policies')"><svg><use href="#i-shield"/></svg> Policy Registry</div>
+      <div class="nav-item" onclick="showPage('devices')"><svg><use href="#i-cpu"/></svg> Device Linking</div>
+    </div>
+    
+    <div class="nav-section">
+      <div class="nav-label">Registries</div>
+      <div class="nav-item" onclick="showPage('fair-registry')"><svg><use href="#i-tag"/></svg> FAIR Tech / ETA</div>
+      <div class="nav-item" onclick="showPage('concordance')"><svg><use href="#i-map"/></svg> Concordance Map</div>
+      <div class="nav-item" onclick="showPage('tools')"><svg><use href="#i-tool"/></svg> Tool Cards <span class="badge">847</span></div>
+    </div>
+    
+    <div class="nav-section">
+      <div class="nav-label">System</div>
+      <div class="nav-item" onclick="showPage('setup')"><svg><use href="#i-gear"/></svg> Config</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main">
+
+    <!-- ════ DASHBOARD ════ -->
+    <div class="page active" id="p-dashboard">
+      <div class="page-head">
+        <h1>Farm Hack Box</h1>
+        <span class="subtitle">Independence through interconnection</span>
+        <div class="actions">
+          <button class="btn btn-teal" onclick="showPage('discovery')"><svg><use href="#i-radio"/></svg> Discover</button>
+          <button class="btn btn-olive"><svg><use href="#i-plus"/></svg> New Card</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card highlight"><div class="stat-label">Box Type</div><div class="stat-val" style="font-size:.9rem;">Diversified Farm</div><div class="stat-sub">Direct market</div></div>
+        <div class="stat-card"><div class="stat-label">Modules</div><div class="stat-val">12</div><div class="stat-sub">of 32</div></div>
+        <div class="stat-card"><div class="stat-label">Network</div><div class="stat-val">5</div><div class="stat-sub">Peers</div></div>
+        <div class="stat-card"><div class="stat-label">Git Mirrors</div><div class="stat-val">4</div><div class="stat-sub">Synced</div></div>
+        <div class="stat-card"><div class="stat-label">Data Objects</div><div class="stat-val">847</div><div class="stat-sub">6 types</div></div>
+        <div class="stat-card"><div class="stat-label">Agreements</div><div class="stat-val">23</div><div class="stat-sub">Active</div></div>
+        <div class="stat-card"><div class="stat-label">Services</div><div class="stat-val">7/9</div><div class="stat-sub">Running</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:.8rem;">
+        <div>
+          <h3 style="margin-bottom:.35rem;font-size:.85rem;">Network Activity</h3>
+          <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.45rem .6rem;">
+            <div class="activity-item"><div class="activity-dot dot-teal"></div><div><strong>Green Mountain District</strong> discovered via beacon<div class="time">5 min ago · Requesting trust</div></div></div>
+            <div class="activity-item"><div class="activity-dot dot-green"></div><div><strong>Farm Hack Global Registry</strong> mirror synced<div class="time">12 min ago · 847 tool cards</div></div></div>
+            <div class="activity-item"><div class="activity-dot dot-purple"></div><div><strong>Concordance Map</strong> updated<div class="time">1 hour ago · 12 new ETA assessments</div></div></div>
+            <div class="activity-item"><div class="activity-dot dot-amber"></div><div><strong>Regional Compact</strong> agreement signed<div class="time">3 hours ago · 4 nodes</div></div></div>
+            <div class="activity-item"><div class="activity-dot dot-blue"></div><div><strong>Moss workspace</strong> invitation<div class="time">Yesterday · Grazing Network</div></div></div>
+          </div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:.35rem;font-size:.85rem;">Quick Actions</h3>
+          <div style="display:flex;flex-direction:column;gap:.3rem;">
+            <button class="btn btn-teal" style="justify-content:flex-start;" onclick="showPage('discovery')"><svg><use href="#i-radio"/></svg> Find nearby boxes</button>
+            <button class="btn btn-purple" style="justify-content:flex-start;" onclick="showPage('interviews')"><svg><use href="#i-play"/></svg> Governance Interview</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="showPage('git-hosting')"><svg><use href="#i-git"/></svg> Manage Git Mirrors</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="showPage('modules')"><svg><use href="#i-grid"/></svg> Module Builder</button>
+            <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="showPage('moss')"><svg><use href="#i-hexagon"/></svg> Moss Workspaces</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ BOX PRESETS ════ -->
+    <div class="page" id="p-presets">
+      <div class="page-head">
+        <h1>Box Presets</h1>
+        <span class="subtitle">Configurations with suggested federation partners</span>
+      </div>
+
+      <div class="teal-box">
+        <h4><svg><use href="#i-network"/></svg> Boxes Finding Each Other</h4>
+        <p>Each preset includes <strong>suggested peers</strong> — boxes that naturally form trusted meshes with your operation. Discovery prioritizes compatible nodes.</p>
+      </div>
+
+      <div class="preset-grid">
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">📚</div><div><h4>Public Ag Library</h4><div class="preset-type">Community Knowledge Commons</div></div></div>
+          <p>Community access, education, tool lending, public knowledge mirror.</p>
+          <div class="preset-modules"><strong>12 modules:</strong> Knowledge Library, Tool Registry, Event Calendar...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Conservation Districts</li><li>Local farms</li><li>Extension offices</li><li>Other libraries</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">🏛️</div><div><h4>Conservation District / TSP</h4><div class="preset-type">Technical Service Provider</div></div></div>
+          <p>Planning, technical assistance, cost-share support, land stewardship.</p>
+          <div class="preset-modules"><strong>14 modules:</strong> Client Workspaces, Conservation Planning...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Client farms</li><li>Regional libraries</li><li>Other districts</li><li>State agencies</li></ul></div>
+        </div>
+
+        <div class="preset-card selected">
+          <div class="preset-header"><div class="preset-icon">🥬</div><div><h4>Diversified Direct Market Farm</h4><div class="preset-type">Mixed Production + Sales</div></div></div>
+          <p>Mixed veg/livestock, CSA, farm store, wholesale, delivery routing.</p>
+          <div class="preset-modules"><strong>15 modules:</strong> Crop Planning, POS, CSA Manager, Logistics...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Conservation district</li><li>Neighboring farms</li><li>Regional food hub</li><li>Ag library</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">🌾</div><div><h4>Regen Grain Farm</h4><div class="preset-type">Field Crops & Soil Health</div></div></div>
+          <p>Field crops, soil health focus, machinery-intensive, cover crops.</p>
+          <div class="preset-modules"><strong>11 modules:</strong> Field Operations, Rotation Planner, Cover Crop...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Equipment co-op</li><li>Grain elevator</li><li>Seed networks</li><li>Research farms</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">🐄</div><div><h4>Regen Ranch</h4><div class="preset-type">Grazing-First Livestock</div></div></div>
+          <p>Grazing planning, paddock management, herd health, forage inventory.</p>
+          <div class="preset-modules"><strong>13 modules:</strong> Paddock Mapping, Grazing Planner, Animal Health...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Grazing network</li><li>Other ranches</li><li>Vet services</li><li>Processors</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">👨‍🍳</div><div><h4>CSA + Restaurant Market Garden</h4><div class="preset-type">Intensive Production</div></div></div>
+          <p>Demand-driven, bed planning, chef orders, harvest packout, invoicing.</p>
+          <div class="preset-modules"><strong>14 modules:</strong> Bed Planning, CSA Shares, Chef Orders...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Restaurant partners</li><li>Other market farms</li><li>Seed suppliers</li><li>Food hub</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">🐴</div><div><h4>Equine & Barn Management</h4><div class="preset-type">Horse & Stable Operations</div></div></div>
+          <p>Horse records, stall/paddock management, feed, lessons, boarding.</p>
+          <div class="preset-modules"><strong>10 modules:</strong> Horse Records, Feed Management, Lesson Booking...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Equine vets</li><li>Farriers</li><li>Feed suppliers</li><li>Riding clubs</li></ul></div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header"><div class="preset-icon">🦌</div><div><h4>Woodland / Hunter Management</h4><div class="preset-type">Access & Wildlife</div></div></div>
+          <p>Hunter access, seasons, zone management, harvest logs.</p>
+          <div class="preset-modules"><strong>6 modules:</strong> Access Permissions, Zone Mapping, Harvest Logs...</div>
+          <div class="preset-peers"><h5>🤝 Suggested Peers</h5><ul><li>Neighboring landowners</li><li>Wildlife agencies</li><li>Hunting clubs</li></ul></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.3rem;">
+        <button class="btn btn-teal btn-lg"><svg><use href="#i-check"/></svg> Apply Selected Preset</button>
+        <button class="btn btn-ghost">Create Custom</button>
+      </div>
+    </div>
+
+    <!-- ════ BOX DISCOVERY ════ -->
+    <div class="page" id="p-discovery">
+      <div class="page-head">
+        <h1>Box Discovery</h1>
+        <span class="subtitle">Find and connect with compatible nodes</span>
+        <div class="actions"><button class="btn btn-teal"><svg><use href="#i-radio"/></svg> Broadcast Beacon</button></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Discovered <span class="tab-badge">7</span></div>
+        <div class="tab">Pending <span class="tab-badge">2</span></div>
+        <div class="tab">Connected <span class="tab-badge">5</span></div>
+        <div class="tab">Trust Meshes</div>
+      </div>
+
+      <div class="teal-box">
+        <h4><svg><use href="#i-radio"/></svg> How Discovery Works</h4>
+        <p>Each box broadcasts a <strong>Node Card</strong> describing its type, region, modules, and federation capabilities. Compatible boxes can request trust relationships.</p>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.8rem;">Compatible with Your Preset</h3>
+      
+      <div class="discovery-card">
+        <div class="disc-icon"><svg><use href="#i-farm"/></svg></div>
+        <div class="disc-info">
+          <h4>Green Mountain Conservation District</h4>
+          <p>Regional planning, technical assistance, 18 client farms. Looking for benchmark network.</p>
+          <div class="disc-meta"><span class="tag tag-sky">district</span><span class="tag tag-teal">regional-mesh</span><span class="tag">benchmarking</span></div>
+          <div class="disc-actions"><button class="btn btn-teal btn-sm"><svg><use href="#i-link"/></svg> Request Trust</button><button class="btn btn-ghost btn-sm">View Node Card</button></div>
+        </div>
+      </div>
+
+      <div class="discovery-card">
+        <div class="disc-icon"><svg><use href="#i-farm"/></svg></div>
+        <div class="disc-info">
+          <h4>Hillside Hollow Farm</h4>
+          <p>Diversified livestock, grazing rotation, equipment co-op member. 12 miles away.</p>
+          <div class="disc-meta"><span class="tag tag-olive">farm</span><span class="tag tag-purple">grazing-coop</span><span class="tag">equipment-share</span></div>
+          <div class="disc-actions"><button class="btn btn-teal btn-sm"><svg><use href="#i-link"/></svg> Request Trust</button><button class="btn btn-ghost btn-sm">View Node Card</button></div>
+        </div>
+      </div>
+
+      <div class="discovery-card">
+        <div class="disc-icon"><svg><use href="#i-book"/></svg></div>
+        <div class="disc-info">
+          <h4>Northeast Agricultural Knowledge Commons</h4>
+          <p>Regional ag library, public tool registry, Farm Hack mirror. Open to all.</p>
+          <div class="disc-meta"><span class="tag tag-purple">library</span><span class="tag tag-olive">public-mesh</span><span class="tag">FAIR-registry</span></div>
+          <div class="disc-actions"><button class="btn btn-olive btn-sm"><svg><use href="#i-check"/></svg> Auto-Connect</button><button class="btn btn-ghost btn-sm">View Node Card</button></div>
+        </div>
+      </div>
+
+      <div class="discovery-card">
+        <div class="disc-icon"><svg><use href="#i-truck"/></svg></div>
+        <div class="disc-info">
+          <h4>Valley Fresh Food Hub</h4>
+          <p>Regional aggregator, wholesale coordination, delivery logistics.</p>
+          <div class="disc-meta"><span class="tag tag-earth">food-hub</span><span class="tag">wholesale</span><span class="tag">logistics</span></div>
+          <div class="disc-actions"><button class="btn btn-teal btn-sm"><svg><use href="#i-link"/></svg> Request Trust</button><button class="btn btn-ghost btn-sm">View Node Card</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ MODULE BUILDER ════ -->
+    <div class="page" id="p-modules">
+      <div class="page-head">
+        <h1>Module Builder</h1>
+        <span class="subtitle">Snap together your operational stack</span>
+        <div class="actions"><button class="btn btn-teal"><svg><use href="#i-check"/></svg> Save Config</button></div>
+      </div>
+
+      <div class="info-box">
+        <h4>🧱 Lego-like Module System</h4>
+        <p>Each module plugs into the <strong>Core Data Ledger</strong>. Enter data once, use across all modules. Click to install/remove.</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">All Modules</div>
+        <div class="tab">Installed <span class="tab-badge">12</span></div>
+        <div class="tab">Available <span class="tab-badge">20</span></div>
+        <div class="tab">Beta</div>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)">
+          <h3><svg><use href="#i-map"/></svg> Records &amp; Mapping</h3>
+          <div class="collapsible-meta"><span class="tag tag-olive">3 installed</span></div>
+          <div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="collapsible-body">
+          <div class="module-grid">
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-map"/></svg></div><h4>Field Mapping</h4><p>Fields, beds, paddocks with GIS</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-database"/></svg></div><h4>Asset Registry</h4><p>Equipment, herds, infrastructure</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-clipboard"/></svg></div><h4>Activity Logs</h4><p>Planting, grazing, harvest</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-cpu"/></svg></div><h4>Sensor Integration</h4><p>Weather, soil, temperature</p><div class="mod-tags"><span class="tag tag-sky">farmOS</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)">
+          <h3><svg><use href="#i-calendar"/></svg> Planning &amp; Calculations</h3>
+          <div class="collapsible-meta"><span class="tag tag-olive">4 installed</span></div>
+          <div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="collapsible-body">
+          <div class="module-grid">
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-leaf"/></svg></div><h4>Crop Planning</h4><p>Succession, bed allocation</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-database"/></svg></div><h4>Seed Calculator</h4><p>Rates, germination, schedules</p><div class="mod-tags"><span class="tag">calculator</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-tractor"/></svg></div><h4>Grazing Planner</h4><p>Paddock rotation, rest periods</p><div class="mod-tags"><span class="tag tag-sky">farmOS</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-database"/></svg></div><h4>Irrigation Planning</h4><p>Zones, schedules, triggers</p><div class="mod-tags"><span class="tag">water</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-leaf"/></svg></div><h4>Cover Crop Calculator</h4><p>Species mix, termination</p><div class="mod-tags"><span class="tag">soil</span></div></div>
+            <div class="module-card beta"><div class="mod-status">beta</div><div class="mod-icon"><svg><use href="#i-layers"/></svg></div><h4>Enterprise Budgets</h4><p>Field-level cost tracking</p><div class="mod-tags"><span class="tag">finance</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)">
+          <h3><svg><use href="#i-store"/></svg> Commerce &amp; Distribution</h3>
+          <div class="collapsible-meta"><span class="tag tag-olive">3 installed</span></div>
+          <div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="collapsible-body">
+          <div class="module-grid">
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-store"/></svg></div><h4>POS &amp; Farm Store</h4><p>Point of sale, inventory</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-users"/></svg></div><h4>CSA Manager</h4><p>Members, shares, pickups</p><div class="mod-tags"><span class="tag">members</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-truck"/></svg></div><h4>Distribution Logistics</h4><p>Routes, pick lists, delivery</p><div class="mod-tags"><span class="tag">logistics</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)">
+          <h3><svg><use href="#i-tractor"/></svg> Operations &amp; Maintenance</h3>
+          <div class="collapsible-meta"><span class="tag tag-olive">2 installed</span></div>
+          <div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="collapsible-body">
+          <div class="module-grid">
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-tractor"/></svg></div><h4>Equipment &amp; Shop</h4><p>Maintenance, parts, orders</p><div class="mod-tags"><span class="tag tag-olive">core</span></div></div>
+            <div class="module-card installed"><div class="mod-icon"><svg><use href="#i-clipboard"/></svg></div><h4>Tasks &amp; Checklists</h4><p>Recurring tasks, SOPs</p><div class="mod-tags"><span class="tag">workflow</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-database"/></svg></div><h4>Compost Management</h4><p>Piles, temps, turns</p><div class="mod-tags"><span class="tag">fertility</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-users"/></svg></div><h4>Animal Health</h4><p>Treatments, weights, breeding</p><div class="mod-tags"><span class="tag">livestock</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)">
+          <h3><svg><use href="#i-book"/></svg> Knowledge &amp; Compliance</h3>
+          <div class="collapsible-meta"><span class="tag">0 installed</span></div>
+          <div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="collapsible-body">
+          <div class="module-grid">
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-book"/></svg></div><h4>Documentation Hub</h4><p>SOPs, manuals, guides</p><div class="mod-tags"><span class="tag">knowledge</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-shield"/></svg></div><h4>Certification Tracker</h4><p>Organic, GAP, food safety</p><div class="mod-tags"><span class="tag">compliance</span></div></div>
+            <div class="module-card"><div class="mod-icon"><svg><use href="#i-file-text"/></svg></div><h4>Grant Reporting</h4><p>USDA, NRCS exports</p><div class="mod-tags"><span class="tag">reports</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ CORE DATA OBJECTS ════ -->
+    <div class="page" id="p-data-objects">
+      <div class="page-head">
+        <h1>Core Data Objects</h1>
+        <span class="subtitle">Enter once, use everywhere</span>
+      </div>
+
+      <div class="teal-box">
+        <h4><svg><use href="#i-database"/></svg> Six Universal Primitives</h4>
+        <p>All modules share these canonical objects. One harvest record can update inventory, feed POS, drive reports, and export for grants simultaneously.</p>
+      </div>
+
+      <div class="data-obj-grid">
+        <div class="data-obj-card"><h4><svg><use href="#i-map"/></svg> Places</h4><p>Fields, beds, paddocks, tunnels, barns, shops, woods, water</p><div class="obj-count">142 records</div></div>
+        <div class="data-obj-card"><h4><svg><use href="#i-tractor"/></svg> Assets</h4><p>Equipment, herds, flocks, compost, seed lots, buildings</p><div class="obj-count">87 records</div></div>
+        <div class="data-obj-card"><h4><svg><use href="#i-clipboard"/></svg> Activities</h4><p>Planting, grazing, harvest, maintenance, observations</p><div class="obj-count">423 records</div></div>
+        <div class="data-obj-card"><h4><svg><use href="#i-box"/></svg> Inventories</h4><p>Seed stock, inputs, products, feed, bedding, parts</p><div class="obj-count">156 records</div></div>
+        <div class="data-obj-card"><h4><svg><use href="#i-calendar"/></svg> Plans</h4><p>Crop plans, grazing plans, irrigation, conservation, budgets</p><div class="obj-count">12 records</div></div>
+        <div class="data-obj-card"><h4><svg><use href="#i-file-text"/></svg> Documents</h4><p>SOPs, images, videos, designs, compliance, maps</p><div class="obj-count">27 records</div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.8rem;">Object Schema Browser</h3>
+      <div class="tbl-wrap">
+        <div class="tbl-head">
+          <input class="tbl-search" placeholder="Search objects...">
+          <button class="chip on">All</button>
+          <button class="chip">Places</button>
+          <button class="chip">Assets</button>
+          <button class="chip">Activities</button>
+        </div>
+        <table>
+          <thead><tr><th>Object Type</th><th>Schema</th><th>Records</th><th>Used By Modules</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Field</strong></td><td><span class="tag tag-teal">place</span></td><td>24</td><td>Crop Planning, Irrigation, Mapping, Grazing</td></tr>
+            <tr><td><strong>Planting</strong></td><td><span class="tag tag-sky">activity</span></td><td>186</td><td>Crop Plan, Seed Calc, Harvest, Reports</td></tr>
+            <tr><td><strong>Equipment</strong></td><td><span class="tag tag-purple">asset</span></td><td>18</td><td>Shop, Tasks, Enterprise Budget</td></tr>
+            <tr><td><strong>Seed Lot</strong></td><td><span class="tag tag-earth">inventory</span></td><td>42</td><td>Seed Calc, Crop Plan, Purchasing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ GIT HOSTING ════ -->
+    <div class="page" id="p-git-hosting">
+      <div class="page-head">
+        <h1>Git Hosting &amp; Mirrors</h1>
+        <span class="subtitle">Federated knowledge sovereignty</span>
+        <div class="actions"><button class="btn btn-ghost"><svg><use href="#i-refresh"/></svg> Sync All</button><button class="btn btn-teal"><svg><use href="#i-plus"/></svg> Add Repo</button></div>
+      </div>
+
+      <div class="teal-box">
+        <h4><svg><use href="#i-git"/></svg> Local-First Knowledge Infrastructure</h4>
+        <p>This node hosts federated Git repositories for offline resilience and data sovereignty. Mirrors sync from global registries while local repos stay under your control.</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">All Repositories <span class="tab-badge">8</span></div>
+        <div class="tab">Mirrors <span class="tab-badge">4</span></div>
+        <div class="tab">Local <span class="tab-badge">3</span></div>
+        <div class="tab">Sync Status</div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">🌐 Default Mirrors (Auto-enabled)</h3>
+      
+      <div class="repo-card">
+        <div class="repo-icon mirror"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Farm Hack Global Tool Registry <span class="status status-active">Synced</span></h5>
+          <p>Open-source tool designs, build documentation, hardware specs. The canonical Farm Hack commons.</p>
+          <div class="repo-meta"><span>gitlab.com/farmhack/tools</span><span>847 cards</span><span>5m ago</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-refresh"/></svg></button><div class="toggle-switch on"></div></div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-icon mirror"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Farm Hack Local Registry <span class="status status-active">Synced</span></h5>
+          <p>Regional adaptations, local tool variants, community-submitted designs.</p>
+          <div class="repo-meta"><span>gitlab.com/farmhack/northeast</span><span>124 cards</span><span>1h ago</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-refresh"/></svg></button><div class="toggle-switch on"></div></div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-icon mirror"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Ag Knowledge Concordance Map <span class="status status-active">Synced</span></h5>
+          <p>ETA-assessed datasets, tools, and software. Ethical Technology Assessment scores, FAIR compliance.</p>
+          <div class="repo-meta"><span>gitlab.com/openteam/concordance</span><span>312 assessments</span><span>2h ago</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-refresh"/></svg></button><div class="toggle-switch on"></div></div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-icon mirror"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>OpenTEAM Community Repos <span class="status status-syncing">Syncing</span></h5>
+          <p>Projects, protocols, governance docs, GOAT/GIAA resources.</p>
+          <div class="repo-meta"><span>gitlab.com/openteam/community</span><span>56 projects</span><span>8 pending</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-refresh"/></svg></button><div class="toggle-switch on"></div></div>
+      </div>
+
+      <h3 style="margin:.7rem 0 .35rem;font-size:.78rem;">📁 Local Repositories</h3>
+
+      <div class="repo-card">
+        <div class="repo-icon local"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Local Farm SOPs <span class="tag tag-olive">local</span></h5>
+          <p>Farm-specific procedures, checklists, seasonal protocols.</p>
+          <div class="repo-meta"><span>local only</span><span>42 documents</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-edit"/></svg></button></div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-icon local"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Equipment Manuals <span class="tag tag-olive">local</span></h5>
+          <p>Machinery documentation, repair notes, parts lists.</p>
+          <div class="repo-meta"><span>local only</span><span>28 documents</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-edit"/></svg></button></div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-icon"><svg><use href="#i-git"/></svg></div>
+        <div class="repo-info">
+          <h5>Regional Grazing Network <span class="tag tag-purple">shared</span></h5>
+          <p>Collaborative protocols, benchmark data. Peer-synced via Moss.</p>
+          <div class="repo-meta"><span>moss://grazing-network</span><span>3 peers</span><span>30m ago</span></div>
+        </div>
+        <div class="repo-actions"><button class="btn btn-ghost btn-sm"><svg><use href="#i-refresh"/></svg></button><div class="toggle-switch on"></div></div>
+      </div>
+    </div>
+
+    <!-- ════ SERVICE CONTAINERS ════ -->
+    <div class="page" id="p-services">
+      <div class="page-head">
+        <h1>Service Containers</h1>
+        <span class="subtitle">Your local farm tech stack</span>
+        <div class="actions"><button class="btn btn-ghost"><svg><use href="#i-refresh"/></svg> Restart All</button></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card highlight"><div class="stat-label">Running</div><div class="stat-val">7</div><div class="stat-sub">of 9</div></div>
+        <div class="stat-card"><div class="stat-label">Memory</div><div class="stat-val">1.4 GB</div><div class="stat-sub">of 4 GB</div></div>
+        <div class="stat-card"><div class="stat-label">CPU</div><div class="stat-val">14%</div><div class="stat-sub">Avg</div></div>
+        <div class="stat-card"><div class="stat-label">Storage</div><div class="stat-val">38%</div><div class="stat-sub">Used</div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Core Services</h3>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-database"/></svg></div><div class="svc-info"><h5>PostgreSQL + PostGIS</h5><p>Primary database with spatial</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-farm"/></svg></div><div class="svc-info"><h5>farmOS Core</h5><p>Operational records & API</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-server"/></svg></div><div class="svc-info"><h5>API Gateway</h5><p>REST/GraphQL + webhooks</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-git"/></svg></div><div class="svc-info"><h5>Git Server (Gitea)</h5><p>Local repos & mirror hosting</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-image"/></svg></div><div class="svc-info"><h5>Media Server</h5><p>Images, video, documents</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+
+      <h3 style="margin:.6rem 0 .35rem;font-size:.78rem;">Optional Services</h3>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-refresh"/></svg></div><div class="svc-info"><h5>Sync / Replication</h5><p>Peer-to-peer data sync</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-map"/></svg></div><div class="svc-info"><h5>Map Tile Cache</h5><p>Offline maps & GIS</p></div><div class="svc-toggle"><span class="status status-active">Running</span><div class="toggle-switch on"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-cpu"/></svg></div><div class="svc-info"><h5>Sensor Gateway</h5><p>IoT device integration</p></div><div class="svc-toggle"><span class="status status-disabled">Stopped</span><div class="toggle-switch"></div></div></div>
+      <div class="service-row"><div class="svc-icon"><svg><use href="#i-hexagon"/></svg></div><div class="svc-info"><h5>Holochain Conductor</h5><p>Moss workspaces & P2P</p></div><div class="svc-toggle"><span class="status status-disabled">Stopped</span><div class="toggle-switch"></div></div></div>
+    </div>
+
+    <!-- ════ MOSS / HOLOCHAIN ════ -->
+    <div class="page" id="p-moss">
+      <div class="page-head">
+        <h1>Moss / Holochain</h1>
+        <span class="subtitle">Sovereign collaboration spaces</span>
+        <div class="actions"><button class="btn btn-teal"><svg><use href="#i-plus"/></svg> Join Workspace</button></div>
+      </div>
+
+      <div class="gov-box">
+        <h4><svg><use href="#i-hexagon"/></svg> About Moss &amp; Holochain</h4>
+        <p><strong>Moss</strong> is a runtime for group spaces composed of tool suites. <strong>Holochain</strong> provides agent-centric, cryptographically mediated collaboration without central databases. Together they enable sovereign workspaces.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Conductor</div><div class="stat-val" style="font-size:.8rem;">Offline</div><div class="stat-sub">Enable in Services</div></div>
+        <div class="stat-card"><div class="stat-label">Workspaces</div><div class="stat-val">2</div><div class="stat-sub">Invitations</div></div>
+        <div class="stat-card"><div class="stat-label">Peers</div><div class="stat-val">—</div><div class="stat-sub">Start conductor</div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Available Workspaces</h3>
+      <div class="node-card" style="border-left:3px solid var(--teal);">
+        <div class="node-icon"><svg><use href="#i-hexagon"/></svg></div>
+        <div class="node-info"><h5>Northeast Grazing Network</h5><p>Regional benchmarking, shared protocols, research</p></div>
+        <div class="node-status"><span class="status status-pending">Invited</span><button class="btn btn-teal btn-sm" style="margin-top:.15rem;">Join</button></div>
+      </div>
+      <div class="node-card" style="border-left:3px solid var(--purple);">
+        <div class="node-icon" style="background:var(--purple-bg);"><svg style="color:var(--purple)"><use href="#i-hexagon"/></svg></div>
+        <div class="node-info"><h5>Vermont Seed Savers Circle</h5><p>Seed variety coordination, germination data</p></div>
+        <div class="node-status"><span class="status status-pending">Invited</span><button class="btn btn-ghost btn-sm" style="margin-top:.15rem;">View</button></div>
+      </div>
+
+      <div class="help-box" style="margin-top:.6rem;">
+        <h4>🚀 Getting Started</h4>
+        <p>1. Enable Holochain Conductor in Service Containers<br>2. Accept workspace invitations<br>3. Install collaboration tools (shared docs, kanban, chat)</p>
+      </div>
+    </div>
+
+    <!-- ════ SYNC POLICIES ════ -->
+    <div class="page" id="p-sync">
+      <div class="page-head">
+        <h1>Sync Policies</h1>
+        <span class="subtitle">Control what data flows where</span>
+      </div>
+
+      <div class="gov-box">
+        <h4><svg><use href="#i-shield"/></svg> Four Modes of Data Sharing</h4>
+        <p><strong>Public</strong> — Open to all · <strong>Partner-only</strong> — Trusted mesh · <strong>Mesh-only</strong> — Specific workspace · <strong>Private</strong> — Local only</p>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Data Class Policies</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Data Class</th><th>Public</th><th>Regional</th><th>Mesh</th><th>Local</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Public Knowledge</strong><br><span style="color:var(--muted);font-size:.6rem;">Tool designs, SOPs</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td></tr>
+            <tr><td><strong>Aggregated Benchmarks</strong><br><span style="color:var(--muted);font-size:.6rem;">Anonymous regional</span></td><td><span class="tag">—</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td></tr>
+            <tr><td><strong>Operational Records</strong><br><span style="color:var(--muted);font-size:.6rem;">Field logs, harvest</span></td><td><span class="tag">—</span></td><td><span class="tag">—</span></td><td><span class="tag tag-olive">✓</span></td><td><span class="tag tag-olive">✓</span></td></tr>
+            <tr><td><strong>Financial Data</strong><br><span style="color:var(--muted);font-size:.6rem;">Sales, costs</span></td><td><span class="tag">—</span></td><td><span class="tag">—</span></td><td><span class="tag">—</span></td><td><span class="tag tag-olive">✓</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ NETWORK & PEERS ════ -->
+    <div class="page" id="p-network">
+      <div class="page-head">
+        <h1>Network &amp; Peers</h1>
+        <span class="subtitle">Federated connections</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Connected Peers</div>
+        <div class="tab">Trust Meshes</div>
+        <div class="tab">Node Card</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Connected</div><div class="stat-val">5</div><div class="stat-sub">Peers</div></div>
+        <div class="stat-card"><div class="stat-label">Meshes</div><div class="stat-val">3</div><div class="stat-sub">Trust circles</div></div>
+        <div class="stat-card"><div class="stat-label">Last Sync</div><div class="stat-val">2m</div><div class="stat-sub">ago</div></div>
+        <div class="stat-card"><div class="stat-label">Shared</div><div class="stat-val">124</div><div class="stat-sub">Objects</div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Connected Peers</h3>
+      <div class="node-card"><div class="node-icon"><svg><use href="#i-farm"/></svg></div><div class="node-info"><h5>Green Mountain Conservation District</h5><p>Regional · Planning support</p></div><div class="node-status"><span class="status status-active">Connected</span><div class="sync-time">2m ago</div></div></div>
+      <div class="node-card"><div class="node-icon"><svg><use href="#i-farm"/></svg></div><div class="node-info"><h5>Hillside Hollow Farm</h5><p>Local · Grazing co-op</p></div><div class="node-status"><span class="status status-active">Connected</span><div class="sync-time">12m ago</div></div></div>
+      <div class="node-card"><div class="node-icon"><svg><use href="#i-farm"/></svg></div><div class="node-info"><h5>Riverside Pastures</h5><p>Local · Ranch</p></div><div class="node-status"><span class="status status-active">Connected</span><div class="sync-time">1h ago</div></div></div>
+      <div class="node-card"><div class="node-icon"><svg><use href="#i-book"/></svg></div><div class="node-info"><h5>Northeast Ag Knowledge Commons</h5><p>Regional · Library</p></div><div class="node-status"><span class="status status-syncing">Syncing</span><div class="sync-time">8 pending</div></div></div>
+      <div class="node-card"><div class="node-icon"><svg><use href="#i-truck"/></svg></div><div class="node-info"><h5>Valley Fresh Food Hub</h5><p>Regional · Wholesale</p></div><div class="node-status"><span class="status status-active">Connected</span><div class="sync-time">3h ago</div></div></div>
+
+      <h3 style="margin:.6rem 0 .35rem;font-size:.78rem;">Trust Meshes</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;">
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.6rem;"><h4 style="font-size:.78rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.25rem;"><span style="width:7px;height:7px;background:var(--olive);border-radius:50%;"></span>Public Mesh</h4><p style="font-size:.65rem;color:var(--muted);margin-bottom:.25rem;">Open educational content</p><div style="font-family:var(--f-mono);font-size:.55rem;color:var(--subtle);">24 nodes · Auto-join</div></div>
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.6rem;"><h4 style="font-size:.78rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.25rem;"><span style="width:7px;height:7px;background:var(--sky);border-radius:50%;"></span>Regional Planning</h4><p style="font-size:.65rem;color:var(--muted);margin-bottom:.25rem;">District coordination</p><div style="font-family:var(--f-mono);font-size:.55rem;color:var(--subtle);">8 nodes · Invited</div></div>
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:.6rem;"><h4 style="font-size:.78rem;margin-bottom:.2rem;display:flex;align-items:center;gap:.25rem;"><span style="width:7px;height:7px;background:var(--purple);border-radius:50%;"></span>Grazing Co-op</h4><p style="font-size:.65rem;color:var(--muted);margin-bottom:.25rem;">Private benchmarking</p><div style="font-family:var(--f-mono);font-size:.55rem;color:var(--subtle);">3 nodes · Private</div></div>
+      </div>
+    </div>
+
+    <!-- ════ GOVERNANCE HOME ════ -->
+    <div class="page" id="p-gov-overview">
+      <div class="page-head">
+        <h1>Polycentric Governance Engine</h1>
+        <span class="subtitle">Participatory agreements for federation</span>
+        <div class="actions"><button class="btn btn-purple" onclick="showPage('interviews')"><svg><use href="#i-play"/></svg> Start Interview</button></div>
+      </div>
+
+      <div class="gov-box">
+        <h4><svg><use href="#i-shield"/></svg> What is Polycentric Governance?</h4>
+        <p>This engine helps create the <strong>right bundle of agreements</strong> for your context. Instead of one universal license, it produces nested, purpose-specific governance through structured interviews, participatory mapping, and machine-readable policies (ODRL).</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.8rem;">
+        <div class="collapsible open" style="margin:0;"><div class="collapsible-head" onclick="showPage('interviews')" style="cursor:pointer"><h3 style="font-size:.78rem;"><svg><use href="#i-clipboard"/></svg> 1. Interviews</h3></div><div class="collapsible-body" style="display:block;border-top:none;padding-top:.4rem;"><p style="font-size:.68rem;color:var(--muted);margin-bottom:.35rem;">Answer questions to generate role, archetype, and criteria.</p><div style="display:flex;gap:.15rem;flex-wrap:wrap;"><span class="tag tag-purple">Identity</span><span class="tag tag-purple">Data</span><span class="tag tag-purple">Value</span></div></div></div>
+        <div class="collapsible open" style="margin:0;"><div class="collapsible-head" onclick="showPage('gov-map')" style="cursor:pointer"><h3 style="font-size:.78rem;"><svg><use href="#i-map"/></svg> 2. Mapping</h3></div><div class="collapsible-body" style="display:block;border-top:none;padding-top:.4rem;"><p style="font-size:.68rem;color:var(--muted);margin-bottom:.35rem;">Map actors, datasets, devices, trust circles.</p><div style="display:flex;gap:.15rem;flex-wrap:wrap;"><span class="tag tag-sky">Actors</span><span class="tag tag-sky">Devices</span><span class="tag tag-sky">Zones</span></div></div></div>
+        <div class="collapsible open" style="margin:0;"><div class="collapsible-head" onclick="showPage('agreements')" style="cursor:pointer"><h3 style="font-size:.78rem;"><svg><use href="#i-file-text"/></svg> 3. Agreements</h3></div><div class="collapsible-body" style="display:block;border-top:none;padding-top:.4rem;"><p style="font-size:.68rem;color:var(--muted);margin-bottom:.35rem;">Generate human + machine-readable agreements.</p><div style="display:flex;gap:.15rem;flex-wrap:wrap;"><span class="tag tag-olive">Participation</span><span class="tag tag-olive">Data Use</span></div></div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Governance Layers</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem;margin-bottom:.8rem;">
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem;text-align:center;"><div style="font-size:1.1rem;margin-bottom:.15rem;">🏠</div><strong style="font-size:.72rem;">Local</strong><p style="font-size:.6rem;color:var(--muted);">Farm, ranch</p></div>
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem;text-align:center;"><div style="font-size:1.1rem;margin-bottom:.15rem;">🌊</div><strong style="font-size:.72rem;">Regional</strong><p style="font-size:.6rem;color:var(--muted);">Watershed, co-op</p></div>
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem;text-align:center;"><div style="font-size:1.1rem;margin-bottom:.15rem;">🏛️</div><strong style="font-size:.72rem;">National</strong><p style="font-size:.6rem;color:var(--muted);">Network</p></div>
+        <div style="background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:.55rem;text-align:center;"><div style="font-size:1.1rem;margin-bottom:.15rem;">🌍</div><strong style="font-size:.72rem;">International</strong><p style="font-size:.6rem;color:var(--muted);">Research</p></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Active Node Profiles</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Node</th><th>Archetype</th><th>Layer</th><th>Agreements</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Maple Valley Farm</strong><br><span style="color:var(--muted);font-size:.62rem;">Vermont · Diversified</span></td><td><span class="tag tag-purple">Local Steward</span></td><td>Local</td><td>4 active</td><td><span class="status status-active">Active</span></td></tr>
+            <tr><td><strong>Green Mountain District</strong><br><span style="color:var(--muted);font-size:.62rem;">Regional planning</span></td><td><span class="tag tag-sky">Aggregator</span></td><td>Regional</td><td>8 active</td><td><span class="status status-active">Active</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ INTERVIEWS ════ -->
+    <div class="page" id="p-interviews">
+      <div class="page-head">
+        <h1>Governance Interviews</h1>
+        <span class="subtitle">Structured self-assessment</span>
+        <div class="actions"><button class="btn btn-purple"><svg><use href="#i-plus"/></svg> New Interview</button></div>
+      </div>
+
+      <div class="interview-progress">
+        <div class="interview-step completed"><div class="step-num">A</div><div class="step-title">Identity</div></div>
+        <div class="interview-step completed"><div class="step-num">B</div><div class="step-title">Data</div></div>
+        <div class="interview-step active"><div class="step-num">C</div><div class="step-title">Value</div></div>
+        <div class="interview-step"><div class="step-num">D</div><div class="step-title">Sensitivity</div></div>
+        <div class="interview-step"><div class="step-num">E</div><div class="step-title">Devices</div></div>
+        <div class="interview-step"><div class="step-num">F</div><div class="step-title">Geography</div></div>
+        <div class="interview-step"><div class="step-num">G</div><div class="step-title">Publication</div></div>
+        <div class="interview-step"><div class="step-num">H</div><div class="step-title">Review</div></div>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-head"><h3><svg><use href="#i-clipboard"/></svg> Module C: Value &amp; Reciprocity</h3><div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div></div>
+        <div class="collapsible-body">
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:.6rem;">Define how benefits should flow back to data contributors.</p>
+          <div class="form-group full">
+            <label>Benefits for data contributors?</label>
+            <div class="multi-check">
+              <label><input type="checkbox" checked> Aggregated reports</label>
+              <label><input type="checkbox" checked> Derived insights</label>
+              <label><input type="checkbox"> Revenue sharing</label>
+              <label><input type="checkbox" checked> Attribution</label>
+              <label><input type="checkbox" checked> Training</label>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Uses requiring local review?</label>
+            <div class="multi-check">
+              <label><input type="checkbox" checked> Commercial resale</label>
+              <label><input type="checkbox" checked> AI/ML training</label>
+              <label><input type="checkbox"> Academic publication</label>
+              <label><input type="checkbox" checked> Cross-border transfer</label>
+            </div>
+          </div>
+          <div style="display:flex;gap:.3rem;margin-top:.6rem;">
+            <button class="btn btn-ghost">← Previous</button>
+            <button class="btn btn-olive">Next: Sensitivity →</button>
+            <button class="btn btn-ghost" style="margin-left:auto;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ GOVERNANCE MAP ════ -->
+    <div class="page" id="p-gov-map">
+      <div class="page-head">
+        <h1>Governance Map</h1>
+        <span class="subtitle">Visual mapping of actors, datasets, devices</span>
+        <div class="actions"><button class="btn btn-olive"><svg><use href="#i-plus"/></svg> Add Node</button></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Network View</div>
+        <div class="tab">Trust Circles</div>
+        <div class="tab">Data Flows</div>
+        <div class="tab">Jurisdictions</div>
+      </div>
+
+      <div class="gov-map-canvas">
+        <div class="placeholder"><svg><use href="#i-map"/></svg><p>Interactive governance map canvas</p></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+        <div class="collapsible open" style="margin:0;"><div class="collapsible-head"><h3 style="font-size:.78rem;">Mapped Objects</h3></div><div class="collapsible-body" style="display:block;border-top:none;"><div style="font-size:.68rem;color:var(--muted);margin-bottom:.35rem;">14 objects across 4 zones</div><div style="display:flex;flex-direction:column;gap:.2rem;"><div style="display:flex;align-items:center;gap:.3rem;padding:.2rem;background:var(--bg);border-radius:var(--r);"><span class="tag tag-olive">Farm</span><span style="font-size:.68rem;">Maple Valley Farm</span></div><div style="display:flex;align-items:center;gap:.3rem;padding:.2rem;background:var(--bg);border-radius:var(--r);"><span class="tag tag-sky">Device</span><span style="font-size:.68rem;">Weather Station</span></div><div style="display:flex;align-items:center;gap:.3rem;padding:.2rem;background:var(--bg);border-radius:var(--r);"><span class="tag tag-purple">Dataset</span><span style="font-size:.68rem;">Soil Health Records</span></div></div></div></div>
+        <div class="collapsible open" style="margin:0;"><div class="collapsible-head"><h3 style="font-size:.78rem;">Trust Zones</h3></div><div class="collapsible-body" style="display:block;border-top:none;"><div style="display:flex;flex-direction:column;gap:.35rem;"><div style="border-left:3px solid var(--olive);padding-left:.5rem;"><strong style="font-size:.72rem;">Local Farm</strong><p style="font-size:.62rem;color:var(--muted);">Full access · 5 datasets</p></div><div style="border-left:3px solid var(--sky);padding-left:.5rem;"><strong style="font-size:.72rem;">Watershed</strong><p style="font-size:.62rem;color:var(--muted);">Aggregated · 12 actors</p></div><div style="border-left:3px solid var(--purple);padding-left:.5rem;"><strong style="font-size:.72rem;">Research</strong><p style="font-size:.62rem;color:var(--muted);">Anonymized · 45 actors</p></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- ════ AGREEMENTS ════ -->
+    <div class="page" id="p-agreements">
+      <div class="page-head">
+        <h1>Agreement Generator</h1>
+        <span class="subtitle">Layered, linked governance agreements</span>
+        <div class="actions"><button class="btn btn-purple"><svg><use href="#i-file-text"/></svg> Generate Bundle</button></div>
+      </div>
+
+      <div class="help-box">
+        <h4>📋 Agreement Stack</h4>
+        <p>Bundle of linked agreements: <strong>plain-language</strong>, <strong>legal template</strong>, and <strong>machine-readable ODRL</strong>.</p>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Agreement Types</h3>
+      <div class="agreement-stack">
+        <div class="agreement-item generated"><div class="ag-icon"><svg><use href="#i-users"/></svg></div><h5>Participation</h5><p>Membership, accountability</p></div>
+        <div class="agreement-item generated"><div class="ag-icon"><svg><use href="#i-link"/></svg></div><h5>Data Sharing</h5><p>What, with whom</p></div>
+        <div class="agreement-item generated"><div class="ag-icon"><svg><use href="#i-file-text"/></svg></div><h5>Data Use License</h5><p>Attribution, derivatives</p></div>
+        <div class="agreement-item generated"><div class="ag-icon"><svg><use href="#i-shield"/></svg></div><h5>Stewardship</h5><p>Retention, security</p></div>
+        <div class="agreement-item"><div class="ag-icon"><svg><use href="#i-cpu"/></svg></div><h5>Device Linking</h5><p>Protocols, auth</p></div>
+        <div class="agreement-item"><div class="ag-icon"><svg><use href="#i-layers"/></svg></div><h5>Derived Products</h5><p>Models, insights</p></div>
+        <div class="agreement-item"><div class="ag-icon"><svg><use href="#i-globe"/></svg></div><h5>Federation</h5><p>Mesh participation</p></div>
+        <div class="agreement-item"><div class="ag-icon"><svg><use href="#i-users"/></svg></div><h5>Community Rider</h5><p>Indigenous/CARE</p></div>
+      </div>
+
+      <h3 style="margin:.6rem 0 .35rem;font-size:.78rem;">Generated Agreements</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Agreement</th><th>Type</th><th>Layer</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><strong>Local Data Sharing</strong></td><td><span class="tag tag-olive">Data</span></td><td>Local</td><td><span class="status status-active">Active</span></td><td><button class="btn btn-ghost btn-sm"><svg><use href="#i-download"/></svg></button></td></tr>
+            <tr><td><strong>Regional Compact</strong></td><td><span class="tag tag-sky">Federation</span></td><td>Regional</td><td><span class="status status-active">Active</span></td><td><button class="btn btn-ghost btn-sm"><svg><use href="#i-download"/></svg></button></td></tr>
+            <tr><td><strong>Research Partner</strong></td><td><span class="tag tag-purple">Use</span></td><td>National</td><td><span class="status status-pending">Review</span></td><td><button class="btn btn-ghost btn-sm"><svg><use href="#i-download"/></svg></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ POLICY REGISTRY ════ -->
+    <div class="page" id="p-policies">
+      <div class="page-head">
+        <h1>Policy Registry</h1>
+        <span class="subtitle">Machine-readable ODRL policies</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Active Policies</div>
+        <div class="tab">Conflicts <span class="tab-badge" style="background:var(--red-bg);color:var(--red);">2</span></div>
+        <div class="tab">Templates</div>
+      </div>
+
+      <div class="collapsible open">
+        <div class="collapsible-head" onclick="toggleCollapsible(this)"><h3><svg><use href="#i-alert"/></svg> Conflicts Requiring Review</h3><div class="toggle-icon"><svg><use href="#i-chevron"/></svg></div></div>
+        <div class="collapsible-body">
+          <div class="policy-rule" style="border-left:3px solid var(--red);">
+            <div class="rule-icon prohibit"><svg><use href="#i-x"/></svg></div>
+            <div class="rule-body"><h5>AI Training Data Use — Conflict</h5><p><strong>Local:</strong> Prohibit all AI/ML training<br><strong>Regional:</strong> Permit anonymized climate models</p><div class="rule-meta">Flagged Mar 21 · Requires review</div></div>
+            <button class="btn btn-ghost btn-sm">Resolve</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin:.5rem 0 .35rem;font-size:.78rem;">Active Policy Rules</h3>
+      <div class="policy-rule"><div class="rule-icon permit"><svg><use href="#i-check"/></svg></div><div class="rule-body"><h5>Regional Aggregation — Permitted</h5><p>Aggregated non-identifiable data may be shared with watershed council.</p><div class="rule-meta">Layer: Regional · Purpose: planning</div></div></div>
+      <div class="policy-rule"><div class="rule-icon prohibit"><svg><use href="#i-x"/></svg></div><div class="rule-body"><h5>Commercial Resale — Prohibited</h5><p>Raw farm-level data may not be sold to commercial third parties.</p><div class="rule-meta">Layer: Local · Purpose: commercial</div></div></div>
+      <div class="policy-rule"><div class="rule-icon duty"><svg><use href="#i-alert"/></svg></div><div class="rule-body"><h5>Attribution Required — Duty</h5><p>Any publication must attribute the source.</p><div class="rule-meta">Layer: All · Purpose: publication</div></div></div>
+    </div>
+
+    <!-- ════ DEVICE LINKING ════ -->
+    <div class="page" id="p-devices">
+      <div class="page-head">
+        <h1>Device Linking</h1>
+        <span class="subtitle">Mesh connectivity and device trust</span>
+        <div class="actions"><button class="btn btn-olive"><svg><use href="#i-plus"/></svg> Link Device</button></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Linked</div><div class="stat-val">12</div><div class="stat-sub">Devices</div></div>
+        <div class="stat-card"><div class="stat-label">Trusted</div><div class="stat-val">9</div><div class="stat-sub">Full mesh</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val">2</div><div class="stat-sub">Awaiting</div></div>
+        <div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-val">1</div><div class="stat-sub">Revoked</div></div>
+      </div>
+
+      <h3 style="margin-bottom:.35rem;font-size:.78rem;">Linked Devices</h3>
+      <div class="device-node"><div class="device-icon"><svg><use href="#i-cpu"/></svg></div><div class="device-info"><h5>Weather Station WST-042</h5><p>farmOS relay · Temp, humidity, precip</p></div><span class="device-status trusted">Trusted</span><button class="btn btn-ghost btn-sm"><svg><use href="#i-edit"/></svg></button></div>
+      <div class="device-node"><div class="device-icon"><svg><use href="#i-cpu"/></svg></div><div class="device-info"><h5>Soil Moisture Array SM-12</h5><p>12 probes · Real-time mapping</p></div><span class="device-status trusted">Trusted</span><button class="btn btn-ghost btn-sm"><svg><use href="#i-edit"/></svg></button></div>
+      <div class="device-node"><div class="device-icon" style="background:var(--earth-bg);"><svg style="color:var(--earth);"><use href="#i-cpu"/></svg></div><div class="device-info"><h5>Third-Party Gateway</h5><p>AgriCorp Inc. · Pending approval</p></div><span class="device-status pending">Pending</span><button class="btn btn-ghost btn-sm">Review</button></div>
+      <div class="device-node"><div class="device-icon" style="background:var(--red-bg);"><svg style="color:var(--red);"><use href="#i-cpu"/></svg></div><div class="device-info"><h5>Unknown Telemetry</h5><p>Unknown source · Blocked</p></div><span class="device-status blocked">Blocked</span><button class="btn btn-ghost btn-sm">Details</button></div>
+    </div>
+
+    <!-- ════ PLACEHOLDER PAGES ════ -->
+    <div class="page" id="p-media"><div class="page-head"><h1>Media Server</h1></div><div class="info-box"><h4>📸 Images, Video, Documents</h4><p>Local media hosting for farm documentation. 2.4 GB used of 50 GB allocation.</p></div></div>
+    <div class="page" id="p-hosting"><div class="page-head"><h1>Hardware</h1></div><div class="info-box"><h4>💻 Node Configuration</h4><p>Running on Raspberry Pi 4 (4GB) with 128GB SSD. Deployment options: self-hosted, cloud VPS, managed.</p></div></div>
+    <div class="page" id="p-fair-registry"><div class="page-head"><h1>FAIR Tech / ETA Registry</h1></div><div class="teal-box"><h4><svg><use href="#i-tag"/></svg> Ethical Technology Assessment</h4><p>Browse ETA-assessed tools with FAIR scores, interoperability ratings, and governance compliance.</p></div></div>
+    <div class="page" id="p-concordance"><div class="page-head"><h1>Ag Knowledge Concordance Map</h1></div><div class="teal-box"><h4><svg><use href="#i-map"/></svg> Navigable Knowledge Index</h4><p>312 ETA-assessed datasets, tools, and software indexed with FAIR compliance and interoperability ratings.</p></div></div>
+    <div class="page" id="p-tools"><div class="page-head"><h1>Tool Cards</h1></div><div class="info-box"><h4>🔧 847 Tool Cards</h4><p>Mirrored from Farm Hack global registry. Open-source designs, build docs, and hardware specs.</p></div></div>
+    <div class="page" id="p-setup"><div class="page-head"><h1>Configuration</h1></div><div class="info-box"><h4>⚙️ System Settings</h4><p>API keys, backup configuration, network settings, deployment options.</p></div></div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('p-' + id);
+  if (page) page.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) {
+      n.classList.add('active');
+    }
+  });
+}
+
+function toggleCollapsible(el) {
+  el.closest('.collapsible').classList.toggle('open');
+}
+
+document.querySelectorAll('.toggle-switch').forEach(sw => {
+  sw.addEventListener('click', function() {
+    this.classList.toggle('on');
+    const label = this.previousElementSibling;
+    if (label && label.classList.contains('status')) {
+      label.className = this.classList.contains('on') ? 'status status-active' : 'status status-disabled';
+      label.textContent = this.classList.contains('on') ? 'Running' : 'Stopped';
+    }
+  });
+});
+
+document.querySelectorAll('.tabs').forEach(tc => {
+  tc.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      tc.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+
+document.querySelectorAll('.module-card').forEach(card => {
+  card.addEventListener('click', function() {
+    if (!this.classList.contains('installed')) {
+      this.classList.add('installed');
+      showToast('Installed: ' + this.querySelector('h4').textContent);
+    }
+  });
+});
+
+document.querySelectorAll('.preset-card').forEach(card => {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+    this.classList.add('selected');
+    showToast('Selected: ' + this.querySelector('h4').textContent);
+  });
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+console.log('Farm Hack Box v12 — Independence through interconnection');
+</script>
+
+</body>
+</html>
