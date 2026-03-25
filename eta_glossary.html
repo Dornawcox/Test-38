@@ -187,17 +187,16 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;l
   padding-right:24px;
 }
 .alpha-nav a{
-  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
-  letter-spacing:.12em;text-transform:uppercase;
+  font-family:'DM Mono',monospace;font-size:13px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
   color:var(--ink-faint);text-decoration:none;
-  padding:5px 10px;border-radius:5px;
-  transition:all .12s;display:flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:5px;
+  transition:all .12s;display:block;text-align:center;
+  border:1px solid transparent;
 }
-.alpha-nav a:hover{background:var(--cream-dk);color:var(--forest)}
-.alpha-nav a.active{background:var(--forest-pale);color:var(--forest);font-weight:600}
-.alpha-nav a .alpha-count{
-  margin-left:auto;font-size:10px;color:var(--ink-faint);
-}
+.alpha-nav a:hover{background:var(--cream-dk);color:var(--forest);border-color:var(--line)}
+.alpha-nav a.active{background:var(--forest-pale);color:var(--forest);font-weight:600;border-color:var(--forest-rim)}
+.alpha-nav a .alpha-count{ display:none; }
 .alpha-section-label{
   font-family:'DM Mono',monospace;font-size:9px;
   letter-spacing:.15em;text-transform:uppercase;
@@ -244,8 +243,12 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;l
   width:36px;height:36px;border-radius:6px;
   flex:0 0 36px;
   display:flex;align-items:center;justify-content:center;
-  font-size:17px;
   margin-top:1px;
+}
+.term-accent svg{
+  width:18px;height:18px;flex:0 0 18px;
+  stroke-width:1.5;stroke:currentColor;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;
 }
 .term-header-text{flex:1;min-width:0}
 .term-name{
@@ -365,7 +368,7 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;l
   width:32px;height:32px;flex:0 0 32px;
   border-radius:6px;background:var(--gold);
   display:flex;align-items:center;justify-content:center;
-  color:white;font-size:16px;
+  color:white;
 }
 .version-banner .vb-text{flex:1}
 .version-banner .vb-label{
@@ -382,7 +385,7 @@ body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;l
   display:none;
 }
 .empty-state.visible{display:block}
-.empty-state-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.empty-state-icon{width:48px;height:48px;margin:0 auto 16px;opacity:.3;color:var(--ink-faint)}
 .empty-state h3{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;color:var(--ink-dim);margin-bottom:8px}
 
 /* ── FOOTER ─────────────────────────────────────── */
@@ -415,7 +418,7 @@ footer{
 <!-- TOPBAR -->
 <nav class="topbar" aria-label="Site navigation">
   <div class="topbar-inner">
-    <a class="brand" href="#">
+    <a class="brand" href="https://dornawcox.github.io/Test-38/">
       <div class="brand-logo">OT</div>
       <div class="brand-text">
         <span class="brand-name">OpenTEAM</span>
@@ -425,7 +428,7 @@ footer{
     <div class="topbar-nav">
       <a href="#" class="active">Glossary</a>
       <a href="eta_unified.html">ETA Tool</a>
-      <a href="https://openteam-agreements.community/TermsandDefinitions/" target="_blank">Full Glossary</a>
+      <a href="https://dornawcox.github.io/Test-38/" target="_blank">Full Glossary</a>
     </div>
   </div>
 </nav>
@@ -489,7 +492,7 @@ footer{
   <main class="glossary-main" id="glossary-main">
     
     <div class="version-banner">
-      <div class="vb-icon">📋</div>
+      <div class="vb-icon"><svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="10" height="13" rx="1.5"/><path d="M6 3V2h6v1M7 7h4M7 10h4M7 13h2"/></svg></div>
       <div class="vb-text">
         <div class="vb-label">Version 1.0 · February 2026</div>
         <div class="vb-desc">Terms specific to the Ethical Technology Assessment (ETA) and Data Trust Assessment Protocol (DTAP) frameworks. For the full OpenTEAM Ag Data Glossary, see the <a href="openteam-glossary.html">complete glossary</a>.</div>
@@ -498,7 +501,7 @@ footer{
     
     <div id="glossary-content"></div>
     <div class="empty-state" id="empty-state">
-      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="22" r="14"/><path d="M38 38l-8-8"/></svg></div>
       <h3>No matching terms</h3>
       <p>Try a different search or clear your filters.</p>
     </div>
@@ -511,7 +514,7 @@ footer{
     <div style="display:flex;gap:20px">
       <a href="eta_unified.html">ETA Tool</a>
       <a href="openteam-glossary.html">Full Glossary</a>
-      <a href="https://openteam-agreements.community/" target="_blank">openteam-agreements.community</a>
+      <a href="https://dornawcox.github.io/Test-38/" target="_blank">OpenTEAM</a>
     </div>
   </div>
 </footer>
@@ -522,7 +525,7 @@ const TERMS = [
   {
     letter: "A",
     name: "Accessible (FAIR Principle)",
-    emoji: "🔓",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="12" height="8" rx="2"/><path d="M6 8V5a3 3 0 016 0"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["fair"],
     shortDef: "There should be clear means of viewing and using data, metadata, or infrastructure. Once found, data should be retrievable via open, standardized protocols.",
@@ -537,7 +540,7 @@ const TERMS = [
   {
     letter: "A",
     name: "Accountability",
-    emoji: "⚖️",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v12M3 9l6-6 6 6"/><path d="M4 14h10"/></svg>`,
     accentBg: "#fde8e0",
     tags: ["eta","gdpr"],
     shortDef: "All parties involved in collection, storage, and use of agricultural data must be held responsible for their engagement in data management and subject to appropriate oversight.",
@@ -552,7 +555,7 @@ const TERMS = [
   {
     letter: "A",
     name: "Accuracy",
-    emoji: "🎯",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><circle cx="9" cy="9" r="2"/><path d="M9 1v2M9 15v2M1 9h2M15 9h2"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta","gdpr"],
     shortDef: "Ensuring that data collected, processed, and reported within a tool or dataset is correct, complete, and not misleading.",
@@ -567,7 +570,7 @@ const TERMS = [
   {
     letter: "C",
     name: "Confidence Tier",
-    emoji: "🏅",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M5.5 10.5L4 16l5-2 5 2-1.5-5.5"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["eta"],
     shortDef: "A 3-level system in the ETA/DTAP framework indicating how independently a score has been validated. Tier 1 = self-assessed, Tier 2 = peer reviewed, Tier 3 = ecosystem steward / auditor.",
@@ -582,7 +585,7 @@ const TERMS = [
   {
     letter: "C",
     name: "Commons Fit",
-    emoji: "🌐",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2a14 14 0 010 14M9 2a14 14 0 000 14"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "A scored ETA category (0–5) measuring whether a tool supports shared infrastructure, interoperability with open standards, and avoids creating data silos or proprietary lock-in.",
@@ -597,7 +600,7 @@ const TERMS = [
   {
     letter: "C",
     name: "Consent",
-    emoji: "✋",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v9M6 4v7M12 4v7M3 8v4a6 6 0 0012 0V8"/><path d="M3 8a2 2 0 014 0M9 2a2 2 0 014 2v2"/></svg>`,
     accentBg: "#fde8e0",
     tags: ["dtap","eta","gdpr"],
     shortDef: "Freely given, specific, informed, and unambiguous agreement by a data subject to the collection, processing, or sharing of their data.",
@@ -612,7 +615,7 @@ const TERMS = [
   {
     letter: "D",
     name: "Data Ethics",
-    emoji: "🧭",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="7"/><path d="M12.5 5.5l-3 6-6 3 3-6 6-3z"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "A scored ETA category for software (0–5) measuring whether a tool protects farmers' data rights, limits secondary use, and avoids exploitative data practices.",
@@ -627,7 +630,7 @@ const TERMS = [
   {
     letter: "D",
     name: "Data Sovereignty",
-    emoji: "🏡",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5L9 3l7 6.5M4 8v7h3v-4h4v4h3V8"/></svg>`,
     accentBg: "#f0e8ff",
     tags: ["dtap","eta"],
     shortDef: "A farmer's or community's ability to create, control, and manage their own data — including knowledge of and meaningful consent over how it is used by others.",
@@ -642,7 +645,7 @@ const TERMS = [
   {
     letter: "D",
     name: "DTAP Score",
-    emoji: "📊",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14V9M7 14V5M11 14V8M15 14V11"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "The 0–100 composite score produced by the Data Trust Assessment Protocol, averaging scores across 6 dimensions: Consent, Provenance, Access, Machine-Readability, Longitudinal Integrity, and Governance.",
@@ -657,7 +660,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D1 — Consent Dimension",
-    emoji: "✅",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="12" height="12" rx="2"/><path d="M6 9l2.5 2.5L12 6.5"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "First DTAP dimension (10 pts). Evaluates whether data collection from individuals or communities followed documented, freely given, and revocable consent procedures.",
@@ -672,7 +675,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D2 — Provenance",
-    emoji: "📍",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2a5 5 0 010 10C6 12 2 9 2 9s4-3 7-3a5 5 0 000 0"/><circle cx="9" cy="7" r="2"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "Second DTAP dimension (10 pts). Evaluates whether the dataset's origin, collection methods, calibration history, and known error sources are documented.",
@@ -687,7 +690,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D3 — Access",
-    emoji: "🔑",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6.5" cy="9" r="3.5"/><path d="M10 9h6M14 7v2M16 7v2"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "Third DTAP dimension (10 pts). Evaluates whether data is accessible to the public, under clear licensing terms, and without prohibitive barriers to download or use.",
@@ -702,7 +705,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D4 — Machine-Readability",
-    emoji: "🤖",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4L2 9l3 5M13 4l3 5-3 5M8 15l2-10"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "Fourth DTAP dimension (10 pts). Evaluates whether data is available in structured, machine-processable formats (CSV, JSON, GeoJSON, NetCDF) rather than PDF or paper only.",
@@ -717,7 +720,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D5 — Longitudinal Integrity",
-    emoji: "📅",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="12" height="12" rx="1"/><path d="M3 8h12M6 2v4M12 2v4M6 12l2 2 4-4"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "Fifth DTAP dimension (10 pts). Evaluates whether the dataset spans sufficient time for trend analysis, and whether historical records are maintained consistently.",
@@ -732,7 +735,7 @@ const TERMS = [
   {
     letter: "D",
     name: "D6 — Governance",
-    emoji: "🏛️",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 14h14M4 14V8M8 14V8M12 14V8M9 3L2 7h14L9 3z"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "Sixth DTAP dimension (10 pts). Evaluates whether a named steward, documented update protocol, and community feedback mechanism exist for the dataset.",
@@ -747,7 +750,7 @@ const TERMS = [
   {
     letter: "E",
     name: "Entry Gate",
-    emoji: "🚪",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="10" height="15" rx="1"/><circle cx="12.5" cy="9.5" r=".8" fill="currentColor"/><path d="M4 17H2V2h2"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "One of four binary pass/fail criteria in the ETA framework (G1–G4), each worth 10 points. Failing any gate prevents a tool from receiving a passing ETA score regardless of category scores.",
@@ -762,7 +765,7 @@ const TERMS = [
   {
     letter: "E",
     name: "ETA Score",
-    emoji: "⭐",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 1l2.09 5.26L17 7.27l-4 3.89.94 5.49L9 14 5.06 16.65l.94-5.49L2 7.27l5.91-.91z"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "The 0–100 composite score from the Ethical Technology Assessment, combining 40 gate points (binary) and 60 category points (scored 0–5 per question), adjusted by confidence tier.",
@@ -777,7 +780,7 @@ const TERMS = [
   {
     letter: "F",
     name: "FAIR Principles",
-    emoji: "📐",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15L15 3M3 15h5M3 15v-5M15 3v5M15 3h-5M7 11l2-2M10 8l2-2"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["fair","eta"],
     shortDef: "Guidelines for 'good data management' that improve discovery and reuse of data by humans and computers. The four principles: Findable, Accessible, Interoperable, Reusable.",
@@ -792,7 +795,7 @@ const TERMS = [
   {
     letter: "F",
     name: "Findable (FAIR Principle)",
-    emoji: "🔎",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M15 15l-3.5-3.5"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["fair"],
     shortDef: "Data and metadata should be easy to find for both humans and computers. Each dataset should have a persistent, globally unique identifier and rich metadata.",
@@ -807,7 +810,7 @@ const TERMS = [
   {
     letter: "G",
     name: "G1 — Transparency",
-    emoji: "💡",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2a5 5 0 014 8c-.8 1-1 1.5-1 2.5H6c0-1-.2-1.5-1-2.5A5 5 0 019 2z"/><path d="M7 14h4M8 16h2"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "First ETA Entry Gate (10 pts). The tool must have accessible, honest documentation describing what it does, who built it, how it processes data, and what its limitations are.",
@@ -822,7 +825,7 @@ const TERMS = [
   {
     letter: "G",
     name: "G2 — Rights & Control",
-    emoji: "🛡️",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2l7 3v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V5l7-3z"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "Second ETA Entry Gate (10 pts). Farmers must retain meaningful control over their data: right to export, right to delete, right to see what is collected, no unauthorized secondary sale.",
@@ -837,7 +840,7 @@ const TERMS = [
   {
     letter: "G",
     name: "G3 — No Abuse / No Lock-in",
-    emoji: "🚫",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="7"/><path d="M4 4l10 10"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "Third ETA Entry Gate (10 pts). The tool must not exploit data for purposes beyond the stated agreement, must not create anticompetitive lock-in, and must not surveil or manipulate users.",
@@ -852,7 +855,7 @@ const TERMS = [
   {
     letter: "G",
     name: "G4 — Safety & Stewardship",
-    emoji: "🧑‍🔧",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 3.3a4 4 0 00-5.5 5.5L3 15l1 1 6.2-6.2a4 4 0 005.5-5.5l-2.3 2.3-1.7-1.7 2.3-2.3z"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "Fourth ETA Entry Gate (10 pts). There must be a named point of contact, documented maintenance plan, and reasonable security practices protecting user data.",
@@ -867,7 +870,7 @@ const TERMS = [
   {
     letter: "I",
     name: "Interoperable (FAIR Principle)",
-    emoji: "🔌",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2v5M11 2v5M5 7h8v3a4 4 0 01-8 0V7z"/><path d="M9 14v3"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["fair","eta"],
     shortDef: "A dataset's or system's ability to work with other datasets, applications, or workflows using shared standards. Key to the FAIR Principles and ETA's Interoperability category.",
@@ -882,7 +885,7 @@ const TERMS = [
   {
     letter: "L",
     name: "Lock-in",
-    emoji: "🔐",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="10" height="8" rx="1.5"/><path d="M6 9V6a3 3 0 016 0v3"/><circle cx="9" cy="13" r="1" fill="currentColor"/></svg>`,
     accentBg: "#fde8e0",
     tags: ["eta"],
     shortDef: "A condition where a user cannot easily switch to an alternative tool or export their data without significant cost, data loss, or technical barrier — typically created by proprietary formats.",
@@ -897,7 +900,7 @@ const TERMS = [
   {
     letter: "M",
     name: "Machine Readable",
-    emoji: "🤖",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4L2 9l3 5M13 4l3 5-3 5M8 15l2-10"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["dtap","fair"],
     shortDef: "Data available in a format that a computer, AI, or algorithm can process automatically — such as CSV, JSON, GeoJSON, XML, or NetCDF.",
@@ -912,7 +915,7 @@ const TERMS = [
   {
     letter: "O",
     name: "Open Source",
-    emoji: "📂",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h14v9a1 1 0 01-1 1H3a1 1 0 01-1-1V7z"/><path d="M2 7l2-4h5l2 4"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "Software or hardware designs that are publicly accessible and can be modified and shared by all users, enabling transparency, community inspection, and collaborative improvement.",
@@ -927,7 +930,7 @@ const TERMS = [
   {
     letter: "P",
     name: "Provenance",
-    emoji: "🗂️",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12l7 4 7-4M2 8l7 4 7-4M9 3L2 7l7 4 7-4-7-4z"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap"],
     shortDef: "The documented history of how data was collected, processed, and curated — including collection methods, instruments, calibration records, and any transformations applied.",
@@ -942,7 +945,7 @@ const TERMS = [
   {
     letter: "P",
     name: "Purpose Limitation",
-    emoji: "🎯",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="3.5"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2"/></svg>`,
     accentBg: "#fde8e0",
     tags: ["eta","gdpr"],
     shortDef: "The principle that personal or agricultural data is only collected for specific, explicit, and legitimate purposes and is not used beyond those stated purposes without fresh consent.",
@@ -957,7 +960,7 @@ const TERMS = [
   {
     letter: "R",
     name: "Resilience",
-    emoji: "💪",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2l7 3v5c0 3.5-2.5 6-7 8-4.5-2-7-4.5-7-8V5l7-3z"/><path d="M10 8H7l-1 3h3l-1 3 4-5h-3l1-1z"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "A scored ETA Hardware category (0–5) measuring whether a tool can be repaired, maintained, and operated by its users without dependence on a single vendor or service for continued operation.",
@@ -972,7 +975,7 @@ const TERMS = [
   {
     letter: "R",
     name: "Resource Ethics",
-    emoji: "🌱",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17V8M9 8C9 5 6 2 2 3c0 4 3 7 7 5M9 8c0-3 3-6 7-5 0 4-3 7-7 5"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta"],
     shortDef: "A scored ETA Hardware category (0–5) measuring the environmental impact of a tool: energy use, materials sourcing, end-of-life disposal, and lifecycle footprint.",
@@ -987,7 +990,7 @@ const TERMS = [
   {
     letter: "R",
     name: "Reusable (FAIR Principle)",
-    emoji: "♻️",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a7 7 0 0112.2-4.7L16 6M16 6V2M16 6h-4"/><path d="M16 9a7 7 0 01-12.2 4.7L2 12M2 12v4M2 12h4"/></svg>`,
     accentBg: "#dbeafe",
     tags: ["fair","dtap"],
     shortDef: "Data and metadata should be well-described, clearly licensed, and formatted to enable (re)use, replication, and combination with other datasets in different settings.",
@@ -1002,7 +1005,7 @@ const TERMS = [
   {
     letter: "S",
     name: "Social Ethics",
-    emoji: "🤝",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 15a4 4 0 00-8 0"/><circle cx="9" cy="7" r="3"/><path d="M17 15a3 3 0 00-6 0M7 15a3 3 0 00-6 0"/><circle cx="14" cy="7" r="2.5"/><circle cx="4" cy="7" r="2.5"/></svg>`,
     accentBg: "#f0e8ff",
     tags: ["eta"],
     shortDef: "A scored ETA Hardware category (0–5) measuring whether a tool's design, supply chain, and deployment respect worker rights, community equity, and inclusive access.",
@@ -1017,7 +1020,7 @@ const TERMS = [
   {
     letter: "T",
     name: "Transparency",
-    emoji: "🪟",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="12" height="12" rx="1.5"/><path d="M3 9h12M9 3v12"/></svg>`,
     accentBg: "#d8f3dc",
     tags: ["eta","gdpr"],
     shortDef: "The condition in which individuals are informed and have access to comprehensive information about their data — what is being collected, how it is used, and who has access.",
@@ -1032,7 +1035,7 @@ const TERMS = [
   {
     letter: "V",
     name: "Versioning",
-    emoji: "🔄",
+    emoji: `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="4" r="2"/><circle cx="5" cy="14" r="2"/><circle cx="13" cy="9" r="2"/><path d="M5 6v6M5 6c0-1 2-3 4-3h3M5 12c0 1 2 3 4 3h3"/></svg>`,
     accentBg: "#fdf5d9",
     tags: ["dtap","eta"],
     shortDef: "The practice of tracking and documenting changes to a tool, dataset, or glossary over time — enabling reproducibility, comparison, and transparent evolution of content.",
@@ -1096,7 +1099,7 @@ function termCard(term){
   div.innerHTML = `
     <div class="eta-strip"></div>
     <div class="term-header" onclick="toggleCard(this)">
-      <div class="term-accent" style="background:${term.accentBg}">${term.emoji}</div>
+      <div class="term-accent" style="background:${term.accentBg};color:${term.accentColor}">${term.emoji}</div>
       <div class="term-header-text">
         <div class="term-name">${term.name}</div>
         <div class="term-def">${term.shortDef}</div>
