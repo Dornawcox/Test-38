@@ -2784,6 +2784,7 @@ h3{font-size: 22px; margin:0 0 10px 0;}
 <a class="rc-idx" href="#" data-cat="regen-econ" onclick="idxOpenDrawer('env-claims');return false;"><div class="rc-band-idx" style="background:#0f766e;"><svg viewBox="0 0 28 28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="22" height="20" rx="2"/><path d="M3 10h22M9 4V10M14 4V10M19 4V10"/><path d="M7 15h14M7 19h9"/></svg></div><div class="rc-body-idx"><div class="rc-t-idx">Environmental Claims Clearinghouse</div><div class="rc-org-idx">OpenTEAM Community</div></div><div class="rc-arr-idx">↗</div></a>
 <a class="rc-idx" href="#" data-cat="regen-econ" onclick="idxOpenDrawer('ne-grazing');return false;"><div class="rc-band-idx" style="background:#0f766e;"><svg viewBox="0 0 28 28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22c0-6 5-10 11-10s11 4 11 10"/><path d="M14 12V5"/><path d="M10 7c1-2 2.5-3 4-3s3 1 4 3"/></svg></div><div class="rc-body-idx"><div class="rc-t-idx">Northeast Grazing &amp; Soil Carbon Network</div><div class="rc-org-idx">PASA</div></div><div class="rc-arr-idx">↗</div></a>
 <a class="rc-idx" href="#" data-cat="interop" onclick="idxOpenDrawer('usda-coop');return false;"><div class="rc-band-idx" style="background:#4c1d95;"><svg viewBox="0 0 28 28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3l9 4v8c0 5-4 9-9 10C9 24 5 20 5 15V7z"/><path d="M9 14l3.5 3.5L19 11"/></svg></div><div class="rc-body-idx"><div class="rc-t-idx">USDA Cooperative Agreements</div><div class="rc-org-idx">OpenTEAM</div></div><div class="rc-arr-idx">↗</div></a>
+<a class="rc-idx" href="#" data-cat="commons" onclick="idxOpenDrawer('participatory-funding');return false;"><div class="rc-band-idx" style="background:#1a4f7a;"><svg viewBox="0 0 28 28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="8" r="4"/><path d="M5 24c0-5 4-9 9-9s9 4 9 9"/><path d="M14 13v5"/><path d="M10 18h8"/><circle cx="8" cy="17" r="2.5"/><circle cx="20" cy="17" r="2.5"/></svg></div><div class="rc-body-idx"><div class="rc-t-idx">Transformational Finance Co-Design</div><div class="rc-org-idx">OpenTEAM</div></div><div class="rc-arr-idx">↗</div></a>
 </div>
   </div>
 </div>
@@ -4881,7 +4882,14 @@ Filter by source or use <em>Browse past events</em> to view the archive. <a href
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(fresh) {
           if (!fresh) return;
-          data = Array.isArray(fresh) ? fresh : (fresh.items || []);
+          var freshArr = Array.isArray(fresh) ? fresh : (fresh.items || []);
+          // Merge: add fresh events not already in inline data (dedup by id)
+          var existingIds = new Set(data.map(function(e){return e.id;}));
+          var merged = data.slice(); // start with inline
+          freshArr.forEach(function(e){
+            if (!existingIds.has(e.id)) merged.push(e);
+          });
+          data = merged;
           buildFilters();
           render();
         })
@@ -5060,6 +5068,7 @@ const I={
 'env-claims':`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="22" height="20" rx="2"/><path d="M3 10h22"/><path d="M9 4V10M14 4V10M19 4V10"/><path d="M7 15h14M7 19h9"/></svg>`,
 'ccd':`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="20" height="22" rx="2"/><path d="M4 9h20"/><path d="M9 3v6M14 3v6M19 3v6"/><path d="M8 15h12M8 19h8"/><circle cx="20" cy="20" r="4"/><path d="M18.5 20l1 1 2-2"/></svg>`,
 'ne-grazing':`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22c0-6 5-10 11-10s11 4 11 10"/><path d="M14 12V5"/><path d="M10 7c1-2 2.5-3 4-3s3 1 4 3"/><path d="M7 22c0-3 3-5 7-5s7 2 7 5"/></svg>`,
+'participatory-funding':`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="8" r="4"/><path d="M5 24c0-5 4-9 9-9s9 4 9 9"/><path d="M14 13v5"/><path d="M10 18h8"/><circle cx="8" cy="17" r="2.5"/><circle cx="20" cy="17" r="2.5"/></svg>`,
 'usda-coop':`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3l9 4v8c0 5-4 9-9 10C9 24 5 20 5 15V7z"/><path d="M9 14l3.5 3.5L19 11"/></svg>`,
 };
 return I[id]||`<svg viewBox="0 0 28 28" fill="none" stroke="${s}" stroke-width="1.8"><circle cx="14" cy="14" r="9"/><path d="M14 9v5l3 3"/></svg>`;
@@ -5411,6 +5420,27 @@ const PROJS = [
    {n:'PCSC farmOS Module', t:'Connected Project', u:'https://farmos.org', i:'tool'},
    {n:'Modus / AgGateway', t:'Standard', u:'https://aggateway.org', i:'std'},
  ]},
+
+{id:'participatory-funding',cat:'commons',
+ title:'Transformational Finance Co-Design',
+ sub:'Participatory Funding · Commons Governance · Community Capital',
+ tags:['Participatory Funding','Commons Governance','Open Finance','Community Capital','Collabathon'],
+ lead:'OpenTEAM · 11th Hour Project · TIFS',lc:'#1a4f7a',
+ status:'Active · Prototyping and field testing',
+ short:'A co-design initiative to build democratic, community-led funding mechanisms for open agricultural innovation — replacing extractive VC and grant-cycle models with participatory decision making processes that keep communities in control.',
+ long:'Conventional ag tech financing — VC exits, charitable-industrial complex grant cycles, and competitive public funding — creates perverse incentives that pull innovation away from community, environmental, and economic wellbeing. This initiative envisions an alternative: a transparent, democratic funding mechanism that decouples capital from its source and empowers land-based communities, open source utilities, and enterprise-level cooperatives to govern their own resources.\n\nThe co-design process unfolded across three events: DWeb (August 2024) for learning and sensemaking; Pie Ranch, Pescadero CA (October 2024) for governance framework co-design across three domains — agricultural knowledge public goods, land-based communities of practice, and enterprise open software; and GOAT (November 2024) for live testing with an active community allocating a real pool of resources together.\n\nOutputs aim to be fully generalizable: templatized process scaffolding, voting criteria frameworks, role and responsibility definitions, and documented case studies adaptable to any community-led innovation context. Anchored in an \"exit to community\" strategy — governance transfers to the networks and communities closest to the work over time.\n\nThe CGO (Commons Governance and Ownership) Working Group, led by IndigiDAO and New Mexico Community Capital, is a key collaborator developing governance frameworks rooted in Indigenous sovereignty and place-based community finance principles. Float.ag serves as a connected resource and platform for participatory agricultural investment.',
+ contrib:'Lead: OpenTEAM · 11th Hour Project Ag Tech Program · Transformational Investing in Food Systems (TIFS)\n\nCGO Working Group: IndigiDAO · New Mexico Community Capital\n\nConnected platforms: Float.ag · Metagov · Terran Collective',
+ outputs:'Process scaffolding and framework templates · Voting criteria and role definitions · Pie Ranch co-design outputs · GOAT live funding pilot · CGO governance framework · Exit-to-community governance model',
+ grat:{'🌱 Grateful':11,'⭐ Valuable':14,'🔗 Used this':4},
+ screenshot:'https://image.thum.io/get/width/800/crop/500/https://float.ag',
+ links:[
+   {n:'Float.ag', t:'Participatory Investment Platform', u:'https://float.ag', i:'globe'},
+   {n:'11th Hour Project Ag Tech Program', t:'Partner & Co-Convener', u:'https://www.11thhourproject.org/agriculture', i:'part'},
+   {n:'TIFS — Transformational Investing in Food Systems', t:'Partner & Co-Convener', u:'https://transformationalinvesting.com', i:'part'},
+   {n:'IndigiDAO — CGO Working Group', t:'Community Governance Partner', u:'https://indigidao.org', i:'part'},
+   {n:'New Mexico Community Capital — CGO Working Group', t:'Place-Based Finance Partner', u:'https://nmcommunitycapital.org', i:'part'},
+   {n:'OpenTEAM GitLab Archive', t:'Documentation', u:'https://gitlab.com/OpenTEAMAg/open-team-1-0-archive', i:'git'},
+ ]}
 ];
 
   /* ── gratitude state ── */
